@@ -121,10 +121,10 @@ export class DockDropEdge extends React.PureComponent<DockDropEdgeProps, any> {
     let draggingPanel = DragState.getData('panel', dockId);
 
     let fromGroup = this.context.getGroup(dropFromPanel.group);
-    if (draggingPanel && draggingPanel.parent?.mode === 'float') {
-      // ignore float panel in edge mode
-      return;
-    }
+    // if (draggingPanel && draggingPanel.parent?.mode === 'float') {
+    //   // ignore float panel in edge mode
+    //   return;
+    // }
     let {
       direction,
       mode,
@@ -180,7 +180,7 @@ export class DockDropEdge extends React.PureComponent<DockDropEdgeProps, any> {
     React.ReactNode {
     return (
       <DragDropDiv getRef={this.getRef} className="dock-drop-edge"
-                   onDragOverT={this.onDragOver} onDragLeaveT={this.onDragLeave} onDropT={this.onDrop}/>
+        onDragOverT={this.onDragOver} onDragLeaveT={this.onDragLeave} onDropT={this.onDrop} />
     );
   }
 
