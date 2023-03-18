@@ -527,15 +527,18 @@ body.dock-dragging iframe {
   transition: all 0.1s ease-out;
 }
 .dock-drop-edge {
-  position: absolute;
-  top: 30px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 100;
-  background: white;
-  border: none;
-  opacity: 0.01;
+    position: absolute;
+    top: 30px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: white;
+    border: none;
+    opacity: 0.01;
+
+    /*border: 2px solid red;
+    opacity: 0.5; */
 }
 .dock-drop-layer {
   position: absolute;

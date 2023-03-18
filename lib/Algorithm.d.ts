@@ -33,7 +33,10 @@ export declare function removeFromLayout(layout: LayoutData, source: TabData | P
 export declare function moveToFront(layout: LayoutData, source: TabData | PanelData): LayoutData;
 export declare function maximize(layout: LayoutData, source: TabData | PanelData): LayoutData;
 export declare function fixFloatPanelPos(layout: LayoutData, layoutWidth?: number, layoutHeight?: number): LayoutData;
-export declare function fixLayoutData(layout: LayoutData, groups?: {
+export declare function fixLayoutData(layout: LayoutData, size: {
+    width: number;
+    height: number;
+}, groups?: {
     [key: string]: TabGroup;
 }, loadTab?: (tab: TabBase) => TabData): LayoutData;
 export declare function replacePanel(layout: LayoutData, panel: PanelData, newPanel: PanelData): LayoutData;

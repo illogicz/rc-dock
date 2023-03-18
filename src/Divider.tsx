@@ -1,10 +1,12 @@
+import {findLastIndex} from "lodash";
 import * as React from "react";
 import {DragDropDiv} from "./dragdrop/DragDropDiv";
 import {DragState} from "./dragdrop/DragManager";
 
 export interface DividerChild {
   size: number;
-  minSize?: number;
+  minSize: number;
+  maxSize: number;
 }
 
 export interface DividerData {
@@ -32,8 +34,10 @@ class BoxDataCache implements DividerData {
 
   beforeSize = 0;
   beforeMinSize = 0;
+  beforeMaxSize = 0;
   afterSize = 0;
   afterMinSize = 0;
+  afterMaxSize = 0;
 
   constructor(data: DividerData) {
     this.element = data.element;
@@ -44,20 +48,47 @@ class BoxDataCache implements DividerData {
       if (child.minSize > 0) {
         this.beforeMinSize += child.minSize;
       }
+      this.beforeMaxSize += child.maxSize;
     }
     for (let child of this.afterDivider) {
       this.afterSize += child.size;
       if (child.minSize > 0) {
         this.afterMinSize += child.minSize;
       }
+      this.afterMaxSize += child.maxSize
     }
+
   }
+
+  getRange(before: number, after: number) {
+    return new BoxDataCache({
+      element: this.element,
+      beforeDivider: this.beforeDivider.slice(before),
+      afterDivider: this.afterDivider.slice(0, after + 1)
+    });
+  }
+
 }
+
+const shrinkable = (child: DividerChild) => child.size > child.minSize;
+const growable = (child: DividerChild) => child.size < child.maxSize;
+
 
 // split size among children
 function spiltSize(newSize: number, oldSize: number, children: DividerChild[]): number[] {
   let reservedSize = -1;
-  let sizes: number[] = [];
+  const filter = newSize > oldSize ? growable : shrinkable;
+  const indexes: number[] = [];
+  const sizes = children.map((child, i) => {
+    if (filter(child)) {
+      indexes.push(i)
+    } else {
+      newSize -= child.size;
+      oldSize -= child.size;
+    }
+    return child.size;
+  })
+
   let requiredMinSize = 0;
   while (requiredMinSize !== reservedSize) {
     reservedSize = requiredMinSize;
@@ -67,8 +98,11 @@ function spiltSize(newSize: number, oldSize: number, children: DividerChild[]): 
       // invalid input
       break;
     }
-    for (let i = 0; i < children.length; ++i) {
+    for (let i of indexes) { //let i = 0; i < children.length; ++i) {
       let size = children[i].size * ratio;
+      if (size > children[i].maxSize) {
+        size = children[i].maxSize;
+      }
       if (size < children[i].minSize) {
         size = children[i].minSize;
         requiredMinSize += size;
@@ -85,63 +119,56 @@ export class Divider extends React.PureComponent<DividerProps, any> {
 
   startDrag = (e: DragState) => {
     this.boxData = new BoxDataCache(this.props.getDividerData(this.props.idx));
+    console.log(this.boxData);
     e.startDrag(this.boxData.element, null);
   };
+
   dragMove = (e: DragState) => {
-    if (e.event.shiftKey || e.event.ctrlKey || e.event.altKey) {
-      this.dragMoveAll(e, e.dx, e.dy);
-    } else {
-      this.dragMove2(e, e.dx, e.dy);
-    }
-  };
-
-  dragMove2(e: DragState, dx: number, dy: number) {
     let {isVertical, changeSizes} = this.props;
-    let {beforeDivider, afterDivider} = this.boxData;
-    if (!(beforeDivider.length && afterDivider.length)) {
-      // invalid input
-      return;
-    }
-    let d = isVertical ? dy : dx;
-    let leftChild = beforeDivider.at(-1);
-    let rightChild = afterDivider[0];
+    let d = isVertical ? e.dy : e.dx;
 
-    let leftSize = leftChild.size + d;
-    let rightSize = rightChild.size - d;
-    // check min size
-    if (d > 0) {
-      if (rightSize < rightChild.minSize) {
-        rightSize = rightChild.minSize;
-        leftSize = leftChild.size + rightChild.size - rightSize;
-      }
-    } else if (leftSize < leftChild.minSize) {
-      leftSize = leftChild.minSize;
-      rightSize = leftChild.size + rightChild.size - leftSize;
+    let box = this.boxData
+    if (!(e.event.shiftKey || e.event.ctrlKey || e.event.altKey)) {
+      const after = box.afterDivider.findIndex(d > 0 ? shrinkable : growable);
+      const before = findLastIndex(box.beforeDivider, d > 0 ? growable : shrinkable);
+      if (before < 0 || after < 0) return;
+      box = box.getRange(before, after);
     }
-    let sizes = beforeDivider.concat(afterDivider).map((child) => child.size);
-    sizes[beforeDivider.length - 1] = leftSize;
-    sizes[beforeDivider.length] = rightSize;
-    changeSizes(sizes);
-  }
 
-  dragMoveAll(e: DragState, dx: number, dy: number) {
-    let {isVertical, changeSizes} = this.props;
-    let {beforeSize, beforeMinSize, afterSize, afterMinSize, beforeDivider, afterDivider} = this.boxData;
-    let d = isVertical ? dy : dx;
+    let {beforeSize, beforeMinSize, beforeMaxSize, afterSize, afterMinSize, afterMaxSize, beforeDivider, afterDivider} = box;
+
+    console.log(beforeDivider.length, afterDivider.length);
+
+    const totalSize = beforeSize + afterSize;
     let newBeforeSize = beforeSize + d;
     let newAfterSize = afterSize - d;
-    // check total min size
+
     if (d > 0) {
       if (newAfterSize < afterMinSize) {
         newAfterSize = afterMinSize;
-        newBeforeSize = beforeSize + afterSize - afterMinSize;
+        newBeforeSize = totalSize - newAfterSize;
+      } else if (newBeforeSize > beforeMaxSize) {
+        newBeforeSize = beforeMaxSize;
+        newAfterSize = totalSize - newBeforeSize;
       }
-    } else if (newBeforeSize < beforeMinSize) {
-      newBeforeSize = beforeMinSize;
-      newAfterSize = beforeSize + afterSize - beforeMinSize;
+    } else {
+      if (newBeforeSize < beforeMinSize) {
+        newBeforeSize = beforeMinSize;
+        newAfterSize = totalSize - newBeforeSize;
+      } else if (newAfterSize > afterMaxSize) {
+        newAfterSize = afterMaxSize;
+        newBeforeSize = totalSize - newAfterSize;
+      }
     }
 
-    changeSizes(spiltSize(newBeforeSize, beforeSize, beforeDivider).concat(spiltSize(newAfterSize, afterSize, afterDivider)));
+
+
+    changeSizes([].concat(
+      this.boxData.beforeDivider.slice(0, -beforeDivider.length).map(c => c.size),
+      spiltSize(newBeforeSize, beforeSize, beforeDivider),
+      spiltSize(newAfterSize, afterSize, afterDivider),
+      this.boxData.afterDivider.slice(afterDivider.length).map(c => c.size)
+    ));
   }
 
   dragEnd = (e: DragState) => {
@@ -159,7 +186,7 @@ export class Divider extends React.PureComponent<DividerProps, any> {
     }
     return (
       <DragDropDiv className={className} onDragStartT={this.startDrag} onDragMoveT={this.dragMove}
-                   onDragEndT={this.dragEnd}/>
+        onDragEndT={this.dragEnd} />
     );
   }
 }

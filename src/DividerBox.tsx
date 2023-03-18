@@ -32,9 +32,9 @@ export class DividerBox extends React.PureComponent<Props, any> {
     let dividerChildren: DividerChild[] = [];
     for (let i = 0; i < length; ++i) {
       if (mode === 'vertical') {
-        dividerChildren.push({size: (nodes[i * 2] as HTMLElement).offsetHeight});
+        dividerChildren.push({size: (nodes[i * 2] as HTMLElement).offsetHeight, minSize: 0, maxSize: this._ref.offsetHeight});
       } else {
-        dividerChildren.push({size: (nodes[i * 2] as HTMLElement).offsetWidth});
+        dividerChildren.push({size: (nodes[i * 2] as HTMLElement).offsetWidth, minSize: 0, maxSize: this._ref.offsetWidth});
       }
     }
     return {
@@ -68,7 +68,7 @@ export class DividerBox extends React.PureComponent<Props, any> {
         if (i > 0) {
           (childrenRender as any[]).push(
             <Divider idx={i} key={i} isVertical={isVertical}
-                     getDividerData={this.getDividerData} changeSizes={this.changeSizes}/>
+              getDividerData={this.getDividerData} changeSizes={this.changeSizes} />
           );
         }
         (childrenRender as any[]).push(children[i]);

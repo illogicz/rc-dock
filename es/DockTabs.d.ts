@@ -1,6 +1,7 @@
 import * as React from "react";
 import { DockContext, DropDirection, PanelData, TabData } from "./DockData";
 import * as DragManager from "./dragdrop/DragManager";
+import { RenderTabBar } from "rc-tabs/lib/interface";
 export declare class TabCache {
     _ref: HTMLDivElement;
     getRef: (r: HTMLDivElement) => void;
@@ -36,7 +37,7 @@ export declare class DockTabs extends React.PureComponent<Props> {
     onMaximizeClick: (e: React.MouseEvent) => void;
     onNewWindowClick: () => void;
     addNewWindowMenu(element: React.ReactElement, showWithLeftClick: boolean): JSX.Element;
-    renderTabBar: (props: any, TabNavList: React.ComponentType) => JSX.Element;
+    renderTabBar: RenderTabBar;
     onTabChange: (activeId: string) => void;
     render(): React.ReactNode;
 }

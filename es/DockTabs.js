@@ -148,7 +148,7 @@ export class TabCache {
         let tab = (React.createElement(DragDropDiv, { getRef: this.getRef, onDragStartT: onDragStart, role: "tab", "aria-selected": parent.activeId === id, onDragOverT: onDragOver, onDropT: onDrop, onDragLeaveT: onDragLeave },
             title,
             closable ?
-                React.createElement("div", { className: "dock-tab-close-btn", onClick: this.onCloseClick })
+                React.createElement("div", { className: "dock-tab-close-btn", onClick: this.onCloseClick, onMouseDown: e => e.stopPropagation() })
                 : null,
             React.createElement("div", { className: "dock-tab-hit-area", ref: this.getHitAreaRef })));
         return (React.createElement(DockTabPane, { key: id, cacheId: id, cached: cached, tab: tab }, content));
@@ -176,6 +176,7 @@ export class DockTabs extends React.PureComponent {
             let { group: groupName, panelLock } = panelData;
             let group = this.context.getGroup(groupName);
             let { panelExtra } = group;
+            //props.
             let maximizable = group.maximizable;
             if (panelData.parent.mode === 'window') {
                 onPanelDragStart = null;

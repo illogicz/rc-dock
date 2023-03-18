@@ -233,9 +233,11 @@ export class DockPanel extends React.PureComponent<Props, State> {
         break;
       }
     }
-
     panelData.w = Math.max(panelData.w || 0, panelData.minWidth || 0);
     panelData.h = Math.max(panelData.h || 0, panelData.minHeight || 0);
+
+    //panelData.w = Math.max(Math.min(panelData.w || 0, panelData.maxWidth || Number.MAX_VALUE), panelData.minWidth || 0);
+    //panelData.h = Math.max(Math.min(panelData.h || 0, panelData.maxHeight || Number.MAX_VALUE), panelData.minHeight || 0);
 
     this.forceUpdate();
   };
@@ -263,7 +265,7 @@ export class DockPanel extends React.PureComponent<Props, State> {
   render(): React.ReactNode {
     let {dropFromPanel, draggingHeader} = this.state;
     let {panelData, size} = this.props;
-    let {minWidth, minHeight, group, id, parent, panelLock} = panelData;
+    let {minWidth, minHeight, maxWidth, maxHeight, group, id, parent, panelLock} = panelData;
     let styleName = group;
     let tabGroup = this.context.getGroup(group);
     let {widthFlex, heightFlex} = tabGroup;
@@ -291,11 +293,8 @@ export class DockPanel extends React.PureComponent<Props, State> {
       dropFromPanel = null;
       onPanelHeaderDragStart = null;
     }
-    let cls = `dock-panel ${
-      panelClass ? panelClass : ''}${
-      dropFromPanel ? ' dock-panel-dropping' : ''}${
-      draggingHeader ? ' dragging' : ''
-    }`;
+    let cls = `dock-panel ${panelClass ? panelClass : ''}${dropFromPanel ? ' dock-panel-dropping' : ''}${draggingHeader ? ' dragging' : ''
+      }`;
     let flex = 1;
     if (isHBox && widthFlex != null) {
       flex = widthFlex;
@@ -307,7 +306,8 @@ export class DockPanel extends React.PureComponent<Props, State> {
     if (flexShrink < 1) {
       flexShrink = 1;
     }
-    let style: React.CSSProperties = {minWidth, minHeight, flex: `${flexGrow} ${flexShrink} ${size}px`};
+
+    let style: React.CSSProperties = {minWidth, minHeight, maxWidth: maxWidth || "", maxHeight: maxHeight || "", flex: `${flexGrow} ${flexShrink} ${size}px`};
     if (isFloat) {
       style.left = panelData.x;
       style.top = panelData.y;
@@ -316,47 +316,47 @@ export class DockPanel extends React.PureComponent<Props, State> {
       style.zIndex = panelData.z;
     }
     let droppingLayer: React.ReactNode;
-    if (dropFromPanel) {
+    if (dropFromPanel && panelData.dropMode !== 'none') {
       let dropFromGroup = this.context.getGroup(dropFromPanel.group);
       let dockId = this.context.getDockId();
       if (!dropFromGroup.tabLocked || DragState.getData('tab', dockId) == null) {
         // not allowed locked tab to create new panel
         let DockDropClass = this.context.useEdgeDrop() ? DockDropEdge : DockDropLayer;
-        droppingLayer = <DockDropClass panelData={panelData} panelElement={this._ref} dropFromPanel={dropFromPanel}/>;
+        droppingLayer = <DockDropClass panelData={panelData} panelElement={this._ref} dropFromPanel={dropFromPanel} />;
       }
     }
 
     return (
       <DragDropDiv getRef={this.getRef} className={cls} style={style} data-dockid={id}
-                   onDragOverT={isFloat ? null : this.onDragOver} onClick={this.onPanelClicked}>
+        onDragOverT={isFloat ? null : this.onDragOver} onClick={this.onPanelClicked}>
         <DockTabs panelData={panelData} onPanelDragStart={onPanelHeaderDragStart}
-                  onPanelDragMove={this.onPanelHeaderDragMove} onPanelDragEnd={this.onPanelHeaderDragEnd}/>
+          onPanelDragMove={this.onPanelHeaderDragMove} onPanelDragEnd={this.onPanelHeaderDragEnd} />
         {isFloat ?
           [
             <DragDropDiv key="drag-size-t" className="dock-panel-drag-size dock-panel-drag-size-t"
-                         onDragStartT={this.onPanelCornerDragT} onDragMoveT={this.onPanelCornerDragMove}
-                         onDragEndT={this.onPanelCornerDragEnd}/>,
+              onDragStartT={this.onPanelCornerDragT} onDragMoveT={this.onPanelCornerDragMove}
+              onDragEndT={this.onPanelCornerDragEnd} />,
             <DragDropDiv key="drag-size-b" className="dock-panel-drag-size dock-panel-drag-size-b"
-                         onDragStartT={this.onPanelCornerDragB} onDragMoveT={this.onPanelCornerDragMove}
-                         onDragEndT={this.onPanelCornerDragEnd}/>,
+              onDragStartT={this.onPanelCornerDragB} onDragMoveT={this.onPanelCornerDragMove}
+              onDragEndT={this.onPanelCornerDragEnd} />,
             <DragDropDiv key="drag-size-l" className="dock-panel-drag-size dock-panel-drag-size-l"
-                         onDragStartT={this.onPanelCornerDragL} onDragMoveT={this.onPanelCornerDragMove}
-                         onDragEndT={this.onPanelCornerDragEnd}/>,
+              onDragStartT={this.onPanelCornerDragL} onDragMoveT={this.onPanelCornerDragMove}
+              onDragEndT={this.onPanelCornerDragEnd} />,
             <DragDropDiv key="drag-size-r" className="dock-panel-drag-size dock-panel-drag-size-r"
-                         onDragStartT={this.onPanelCornerDragR} onDragMoveT={this.onPanelCornerDragMove}
-                         onDragEndT={this.onPanelCornerDragEnd}/>,
+              onDragStartT={this.onPanelCornerDragR} onDragMoveT={this.onPanelCornerDragMove}
+              onDragEndT={this.onPanelCornerDragEnd} />,
             <DragDropDiv key="drag-size-t-l" className="dock-panel-drag-size dock-panel-drag-size-t-l"
-                         onDragStartT={this.onPanelCornerDragTL} onDragMoveT={this.onPanelCornerDragMove}
-                         onDragEndT={this.onPanelCornerDragEnd}/>,
+              onDragStartT={this.onPanelCornerDragTL} onDragMoveT={this.onPanelCornerDragMove}
+              onDragEndT={this.onPanelCornerDragEnd} />,
             <DragDropDiv key="drag-size-t-r" className="dock-panel-drag-size dock-panel-drag-size-t-r"
-                         onDragStartT={this.onPanelCornerDragTR} onDragMoveT={this.onPanelCornerDragMove}
-                         onDragEndT={this.onPanelCornerDragEnd}/>,
+              onDragStartT={this.onPanelCornerDragTR} onDragMoveT={this.onPanelCornerDragMove}
+              onDragEndT={this.onPanelCornerDragEnd} />,
             <DragDropDiv key="drag-size-b-l" className="dock-panel-drag-size dock-panel-drag-size-b-l"
-                         onDragStartT={this.onPanelCornerDragBL} onDragMoveT={this.onPanelCornerDragMove}
-                         onDragEndT={this.onPanelCornerDragEnd}/>,
+              onDragStartT={this.onPanelCornerDragBL} onDragMoveT={this.onPanelCornerDragMove}
+              onDragEndT={this.onPanelCornerDragEnd} />,
             <DragDropDiv key="drag-size-b-r" className="dock-panel-drag-size dock-panel-drag-size-b-r"
-                         onDragStartT={this.onPanelCornerDragBR} onDragMoveT={this.onPanelCornerDragMove}
-                         onDragEndT={this.onPanelCornerDragEnd}/>
+              onDragStartT={this.onPanelCornerDragBR} onDragMoveT={this.onPanelCornerDragMove}
+              onDragEndT={this.onPanelCornerDragEnd} />
           ]
           : null
         }

@@ -20,10 +20,10 @@ export class DockBox extends React.PureComponent {
             let dividerChildren = [];
             for (let i = 0; i < children.length; ++i) {
                 if (mode === 'vertical') {
-                    dividerChildren.push({ size: nodes[i * 2].offsetHeight, minSize: children[i].minHeight });
+                    dividerChildren.push({ size: nodes[i * 2].offsetHeight, minSize: children[i].minHeight, maxSize: children[i].maxHeight });
                 }
                 else {
-                    dividerChildren.push({ size: nodes[i * 2].offsetWidth, minSize: children[i].minWidth });
+                    dividerChildren.push({ size: nodes[i * 2].offsetWidth, minSize: children[i].minWidth, maxSize: children[i].maxWidth });
                 }
             }
             return {
@@ -33,8 +33,10 @@ export class DockBox extends React.PureComponent {
             };
         };
         this.changeSizes = (sizes) => {
+            console.log(sizes);
             let { children } = this.props.boxData;
             if (children.length !== sizes.length) {
+                debugger;
                 return;
             }
             for (let i = 0; i < children.length; ++i) {
@@ -48,7 +50,7 @@ export class DockBox extends React.PureComponent {
     }
     render() {
         let { boxData } = this.props;
-        let { minWidth, minHeight, size, children, mode, id, widthFlex, heightFlex } = boxData;
+        let { minWidth, minHeight, maxWidth, maxHeight, size, children, mode, id, widthFlex, heightFlex } = boxData;
         let isVertical = mode === 'vertical';
         let childrenRender = [];
         for (let i = 0; i < children.length; ++i) {
@@ -84,7 +86,8 @@ export class DockBox extends React.PureComponent {
         if (flexShrink < 1) {
             flexShrink = 1;
         }
-        return (React.createElement("div", { ref: this.getRef, className: cls, "data-dockid": id, style: { minWidth, minHeight, flex: `${flexGrow} ${flexShrink} ${size}px` } }, childrenRender));
+        //maxWidth, maxHeight
+        return (React.createElement("div", { ref: this.getRef, className: cls, "data-dockid": id, style: { minWidth, minHeight, maxWidth, maxHeight, flex: `${flexGrow} ${flexShrink} ${size}px` } }, childrenRender));
     }
 }
 DockBox.contextType = DockContextType;

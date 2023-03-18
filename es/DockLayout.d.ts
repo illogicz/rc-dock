@@ -171,7 +171,7 @@ export declare class DockLayout extends DockPortalManager implements DockContext
      */
     loadLayout(savedLayout: LayoutBase): void;
     /** @ignore */
-    static loadLayoutData(savedLayout: LayoutBase, props: LayoutProps, width?: number, height?: number): LayoutData;
+    static loadLayoutData(savedLayout: LayoutBase, props: LayoutProps, width: number, height: number): LayoutData;
     static getDerivedStateFromProps(props: LayoutProps, state: LayoutState): {
         layout: LayoutData;
     };

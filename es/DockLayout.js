@@ -96,10 +96,8 @@ export class DockLayout extends DockPortalManager {
             let layout = this.getLayout();
             if (this._ref) {
                 let newLayout = Algorithm.fixFloatPanelPos(layout, this._ref.offsetWidth, this._ref.offsetHeight);
-                if (layout !== newLayout) {
-                    newLayout = Algorithm.fixLayoutData(newLayout, this.props.groups); // panel parent might need a fix
-                    this.changeLayout(newLayout, null, 'move');
-                }
+                newLayout = Algorithm.fixLayoutData(newLayout, this.getLayoutSize(), this.props.groups); // panel parent might need a fix
+                this.changeLayout(newLayout, null, 'move');
             }
         }, 200);
         let { layout, defaultLayout, loadTab } = props;
@@ -112,8 +110,9 @@ export class DockLayout extends DockPortalManager {
         }
         if (layout) {
             // controlled layout
+            const size = this.getLayoutSize();
             this.state = {
-                layout: DockLayout.loadLayoutData(layout, props),
+                layout: DockLayout.loadLayoutData(layout, props, size.width, size.height),
                 dropRect: null,
             };
         }
@@ -133,7 +132,7 @@ export class DockLayout extends DockPortalManager {
     /** @ignore */
     prepareInitData(data) {
         let layout = Object.assign({}, data);
-        Algorithm.fixLayoutData(layout, this.props.groups, this.props.loadTab);
+        Algorithm.fixLayoutData(layout, this.getLayoutSize(), this.props.groups, this.props.loadTab);
         return layout;
     }
     /** @ignore */
@@ -217,7 +216,7 @@ export class DockLayout extends DockPortalManager {
             }
         }
         if (layout !== this.getLayout()) {
-            layout = Algorithm.fixLayoutData(layout, this.props.groups);
+            layout = Algorithm.fixLayoutData(layout, this.getLayoutSize(), this.props.groups);
             const currentTabId = source.hasOwnProperty('tabs') ? source.activeId : source.id;
             this.changeLayout(layout, currentTabId, direction);
         }
@@ -229,10 +228,9 @@ export class DockLayout extends DockPortalManager {
     }
     /** @ignore */
     getLayoutSize() {
-        if (this._ref) {
-            return { width: this._ref.offsetWidth, height: this._ref.offsetHeight };
-        }
-        return { width: 0, height: 0 };
+        var _a;
+        const el = (_a = this._ref) !== null && _a !== void 0 ? _a : document.body;
+        return { width: el.offsetWidth, height: el.offsetHeight };
     }
     /** @inheritDoc */
     updateTab(id, newTab, makeActive = true) {
@@ -264,7 +262,7 @@ export class DockLayout extends DockPortalManager {
             else if (makeActive && panelData.activeId !== id) {
                 layout = Algorithm.replacePanel(layout, panelData, Object.assign(Object.assign({}, panelData), { activeId: id }));
             }
-            layout = Algorithm.fixLayoutData(layout, this.props.groups);
+            layout = Algorithm.fixLayoutData(layout, this.getLayoutSize(), this.props.groups);
             this.changeLayout(layout, (_a = newTab === null || newTab === void 0 ? void 0 : newTab.id) !== null && _a !== void 0 ? _a : id, 'update');
             return true;
         }
@@ -488,11 +486,11 @@ export class DockLayout extends DockPortalManager {
         this.setLayout(DockLayout.loadLayoutData(savedLayout, this.props, this._ref.offsetWidth, this._ref.offsetHeight));
     }
     /** @ignore */
-    static loadLayoutData(savedLayout, props, width = 0, height = 0) {
+    static loadLayoutData(savedLayout, props, width, height) {
         let { defaultLayout, loadTab, afterPanelLoaded, groups } = props;
         let layout = Serializer.loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLoaded);
         layout = Algorithm.fixFloatPanelPos(layout, width, height);
-        layout = Algorithm.fixLayoutData(layout, groups);
+        layout = Algorithm.fixLayoutData(layout, { width, height }, groups);
         layout.loadedFrom = savedLayout;
         return layout;
     }
@@ -502,7 +500,7 @@ export class DockLayout extends DockPortalManager {
         if (layoutToLoad && layoutToLoad !== currentLayout.loadedFrom) {
             // auto reload on layout prop change
             return {
-                layout: DockLayout.loadLayoutData(layoutToLoad, props),
+                layout: DockLayout.loadLayoutData(layoutToLoad, props, currentLayout.dockbox.maxWidth, currentLayout.dockbox.maxHeight),
             };
         }
         return null;

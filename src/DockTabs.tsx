@@ -11,6 +11,7 @@ import {getFloatPanelSize} from "./Algorithm";
 import {WindowBox} from "./WindowBox";
 import {groupClassNames} from "./Utils";
 import classNames from "classnames";
+import { RenderTabBar } from "rc-tabs/lib/interface";
 
 function findParentPanel(element: HTMLElement) {
   for (let i = 0; i < 10; ++i) {
@@ -161,7 +162,7 @@ export class TabCache {
                    onDragOverT={onDragOver} onDropT={onDrop} onDragLeaveT={onDragLeave}>
         {title}
         {closable ?
-          <div className="dock-tab-close-btn" onClick={this.onCloseClick}/>
+          <div className="dock-tab-close-btn" onClick={this.onCloseClick} onMouseDown={e => e.stopPropagation()} />
           : null
         }
         <div className="dock-tab-hit-area" ref={this.getHitAreaRef}/>
@@ -260,12 +261,12 @@ export class DockTabs extends React.PureComponent<Props> {
     );
   }
 
-  renderTabBar = (props: any, TabNavList: React.ComponentType) => {
+  renderTabBar: RenderTabBar = (props, TabNavList) => {
     let {panelData, onPanelDragStart, onPanelDragMove, onPanelDragEnd} = this.props;
     let {group: groupName, panelLock} = panelData;
     let group = this.context.getGroup(groupName);
     let {panelExtra} = group;
-
+    //props.
     let maximizable = group.maximizable;
     if (panelData.parent.mode === 'window') {
       onPanelDragStart = null;

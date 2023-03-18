@@ -77,6 +77,7 @@ export interface TabGroup {
    * Override the default `moreIcon`
    */
   moreIcon?: React.ReactNode;
+
 }
 
 /** @ignore */
@@ -97,10 +98,12 @@ export const placeHolderGroup: TabGroup = {
 interface DockDataBase {
   minWidth?: number;
   minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
 }
 
 export type DockMode = 'horizontal' | 'vertical' | 'float' | 'window' | 'maximize';
-
+export type DropMode = 'all' | 'vertical' | 'horizontal' | 'none';
 
 export interface TabBase {
   /**
@@ -141,6 +144,8 @@ export interface PanelBase {
   w?: number;
   /** float mode only */
   h?: number;
+
+  dropMode?: DropMode;
 }
 
 export interface BoxBase {
@@ -216,6 +221,8 @@ interface PanelLock {
 
   minWidth?: number;
   minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
 
   /**
    * override the default extra content from TabGroup.panelExtra,
@@ -346,7 +353,7 @@ export interface DockContext {
     source: TabData | PanelData,
     target: string | TabData | PanelData | BoxData | null,
     direction: DropDirection,
-    floatPosition?: { left: number, top: number, width: number, height: number }
+    floatPosition?: {left: number, top: number, width: number, height: number}
   ): void;
 
   /**

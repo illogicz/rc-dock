@@ -82,8 +82,11 @@ export declare const placeHolderGroup: TabGroup;
 interface DockDataBase {
     minWidth?: number;
     minHeight?: number;
+    maxWidth?: number;
+    maxHeight?: number;
 }
 export declare type DockMode = 'horizontal' | 'vertical' | 'float' | 'window' | 'maximize';
+export declare type DropMode = 'all' | 'vertical' | 'horizontal' | 'none';
 export interface TabBase {
     /**
      * id must be unique
@@ -119,6 +122,7 @@ export interface PanelBase {
     w?: number;
     /** float mode only */
     h?: number;
+    dropMode?: DropMode;
 }
 export interface BoxBase {
     /**
@@ -182,6 +186,8 @@ interface PanelLock {
     panelStyle?: string;
     minWidth?: number;
     minHeight?: number;
+    maxWidth?: number;
+    maxHeight?: number;
     /**
      * override the default extra content from TabGroup.panelExtra,
      *

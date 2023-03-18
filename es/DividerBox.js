@@ -34,10 +34,10 @@ export class DividerBox extends React.PureComponent {
             let dividerChildren = [];
             for (let i = 0; i < length; ++i) {
                 if (mode === 'vertical') {
-                    dividerChildren.push({ size: nodes[i * 2].offsetHeight });
+                    dividerChildren.push({ size: nodes[i * 2].offsetHeight, minSize: 0, maxSize: this._ref.offsetHeight });
                 }
                 else {
-                    dividerChildren.push({ size: nodes[i * 2].offsetWidth });
+                    dividerChildren.push({ size: nodes[i * 2].offsetWidth, minSize: 0, maxSize: this._ref.offsetWidth });
                 }
             }
             return {

@@ -59,7 +59,7 @@ export class DockDropEdge extends React.PureComponent {
             }
         };
     }
-    getDirection(e, group, samePanel, tabLength) {
+    getDirectionInternal(e, group, samePanel, tabLength) {
         let rect = this._ref.getBoundingClientRect();
         let widthRate = Math.min(rect.width, 500);
         let heightRate = Math.min(rect.height, 500);
@@ -68,6 +68,13 @@ export class DockDropEdge extends React.PureComponent {
         let top = (e.clientY - rect.top) / heightRate;
         let bottom = (rect.bottom - e.clientY) / heightRate;
         let min = Math.min(left, right, top, bottom);
+        const { dropMode } = this.props.panelData;
+        if (dropMode === 'vertical' || dropMode === 'none') {
+            left = right = NaN;
+        }
+        if (dropMode === 'horizontal' || dropMode === 'none') {
+            top = bottom = NaN;
+        }
         let depth = 0;
         if (group.disableDock || samePanel) {
             // use an impossible min value to disable dock drop
@@ -93,6 +100,7 @@ export class DockDropEdge extends React.PureComponent {
                 }
             }
             else {
+                //return { direction: null, depth: 0 };
                 return { direction: 'float', mode: 'float', depth: 0 };
             }
         }
@@ -112,6 +120,21 @@ export class DockDropEdge extends React.PureComponent {
         }
         // probably a invalid input causing everything to be NaN?
         return { direction: null, depth: 0 };
+    }
+    getDirection(e, group, samePanel, tabLength) {
+        var _a;
+        const ret = this.getDirectionInternal(e, group, samePanel, tabLength);
+        e = Object.assign(Object.create(Object.getPrototypeOf(e)), e);
+        console.log({ e, group, samePanel });
+        console.log(this.props.panelData);
+        const from = this.props.dropFromPanel;
+        const source = this.getSource();
+        if (ret.direction === 'float' && ret.mode === 'float' && ((_a = from.parent) === null || _a === void 0 ? void 0 : _a.mode) === 'float') {
+            if (source.id === from.id) {
+                return { direction: null, depth: 0 };
+            }
+        }
+        return ret;
     }
     getActualDepth(depth, mode, direction) {
         let afterPanel = (direction === 'bottom' || direction === 'right');
@@ -148,6 +171,15 @@ export class DockDropEdge extends React.PureComponent {
             depth -= 2;
         }
         return depth;
+    }
+    getSource() {
+        let dockId = this.context.getDockId();
+        let source = DragState.getData('tab', dockId);
+        let draggingPanel = DragState.getData('panel', dockId);
+        if (!source) {
+            source = draggingPanel;
+        }
+        return source;
     }
     render() {
         return (React.createElement(DragDropDiv, { getRef: this.getRef, className: "dock-drop-edge", onDragOverT: this.onDragOver, onDragLeaveT: this.onDragLeave, onDropT: this.onDrop }));
