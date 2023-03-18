@@ -316,7 +316,7 @@ export class DockPanel extends React.PureComponent<Props, State> {
       style.zIndex = panelData.z;
     }
     let droppingLayer: React.ReactNode;
-    if (dropFromPanel && panelData.dropMode !== 'none') {
+    if (dropFromPanel && panelData.dropMode?.length !== 0) {
       let dropFromGroup = this.context.getGroup(dropFromPanel.group);
       let dockId = this.context.getDockId();
       if (!dropFromGroup.tabLocked || DragState.getData('tab', dockId) == null) {

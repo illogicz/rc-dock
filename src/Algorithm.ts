@@ -543,12 +543,13 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
     if (!(d.size >= 0)) {
       d.size = 200;
     }
-    d.minWidth = 0;
-    d.minHeight = 0;
+    d.minWidth = 0; //d.parent ? 0 : size.width;
+    d.minHeight = 0; //d.parent ? 0 : size.height;
     d.maxWidth = d.parent?.maxWidth ?? size.width;
     d.maxHeight = d.parent?.maxHeight ?? size.height;
     d.widthFlex = null;
     d.heightFlex = null;
+    console.log("fix", d.id, d.maxWidth, d.maxHeight)
   }
 
   function fixPanelData(panel: PanelData): PanelData {
@@ -719,6 +720,9 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
       }
     }
 
+    // console.log(box.id, box.mode);
+    // console.table(box.children.map(c => ({id: c.id, maxW: c.maxWidth, maxH: c.maxHeight})));
+    // console.log({maxWidth, boxW: box.maxWidth, maxHeight, boxH: box.maxHeight});
     if (maxWidth < box.maxWidth) box.maxWidth = maxWidth;
     if (maxHeight < box.maxHeight) box.maxHeight = maxHeight;
 
@@ -731,7 +735,6 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
         }
         break;
       case 'vertical':
-        debugger;
         const vspace = box.maxHeight - box.minHeight;
         for (let i = 0; i < box.children.length; ++i) {
           let child = box.children[i];

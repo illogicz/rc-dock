@@ -101,6 +101,9 @@ export interface LayoutProps {
 
 interface LayoutState {
   layout: LayoutData;
+
+  getLayoutSize(): {width: number, height: number},
+
   /** @ignore */
   dropRect?: {left: number, width: number, top: number, height: number, element: HTMLElement, source?: any, direction?: DropDirection};
 }
@@ -374,12 +377,14 @@ export class DockLayout extends DockPortalManager implements DockContext {
       // controlled layout
       const size = this.getLayoutSize();
       this.state = {
-        layout: DockLayout.loadLayoutData(layout, props, size.width, size.height),
+        layout: DockLayout.loadLayoutData(layout, props, size),
+        getLayoutSize: () => this.getLayoutSize(),
         dropRect: null,
       };
     } else {
       this.state = {
         layout: preparedLayout,
+        getLayoutSize: () => this.getLayoutSize(),
         dropRect: null,
       };
     }
@@ -508,7 +513,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
     return (
       <div ref={this.getRef} className="dock-layout" style={style}>
         <DockContextProvider value={this}>
-          <DockBox size={1} boxData={layout.dockbox} />
+          <DockBox size={Math.random()} boxData={layout.dockbox} />
           <FloatBox boxData={layout.floatbox} />
           <WindowBox boxData={layout.windowbox} />
           {maximize}
@@ -583,10 +588,10 @@ export class DockLayout extends DockPortalManager implements DockContext {
       savedLayout = Serializer.saveLayoutData(layoutData, this.props.saveTab, this.props.afterPanelSaved);
       layoutData.loadedFrom = savedLayout;
       onLayoutChange(savedLayout, currentTabId, direction);
-      if (layout) {
-        // if layout prop is defined, we need to force an update to make sure it's either updated or reverted back
-        this.forceUpdate();
-      }
+      //if (layout) {
+      // if layout prop is defined, we need to force an update to make sure it's either updated or reverted back
+      this.forceUpdate();
+      //}
     }
     if (!layout && !silent) {
       // uncontrolled layout when Props.layout is not defined
@@ -617,11 +622,11 @@ export class DockLayout extends DockPortalManager implements DockContext {
    * calling this api won't trigger the [[LayoutProps.onLayoutChange]] callback
    */
   loadLayout(savedLayout: LayoutBase) {
-    this.setLayout(DockLayout.loadLayoutData(savedLayout, this.props, this._ref.offsetWidth, this._ref.offsetHeight));
+    this.setLayout(DockLayout.loadLayoutData(savedLayout, this.props, this.getLayoutSize()));
   }
 
   /** @ignore */
-  static loadLayoutData(savedLayout: LayoutBase, props: LayoutProps, width: number, height: number): LayoutData {
+  static loadLayoutData(savedLayout: LayoutBase, props: LayoutProps, size: {width: number, height: number}): LayoutData {
     let {defaultLayout, loadTab, afterPanelLoaded, groups} = props;
     let layout = Serializer.loadLayoutData(
       savedLayout,
@@ -629,8 +634,8 @@ export class DockLayout extends DockPortalManager implements DockContext {
       loadTab,
       afterPanelLoaded
     );
-    layout = Algorithm.fixFloatPanelPos(layout, width, height);
-    layout = Algorithm.fixLayoutData(layout, {width, height}, groups);
+    layout = Algorithm.fixFloatPanelPos(layout, size.width, size.height);
+    layout = Algorithm.fixLayoutData(layout, size, groups);
     layout.loadedFrom = savedLayout;
     return layout;
   }
@@ -641,7 +646,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
     if (layoutToLoad && layoutToLoad !== currentLayout.loadedFrom) {
       // auto reload on layout prop change
       return {
-        layout: DockLayout.loadLayoutData(layoutToLoad, props, currentLayout.dockbox.maxWidth, currentLayout.dockbox.maxHeight),
+        layout: DockLayout.loadLayoutData(layoutToLoad, props, state.getLayoutSize()),
       };
     }
     return null;

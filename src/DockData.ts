@@ -103,7 +103,7 @@ interface DockDataBase {
 }
 
 export type DockMode = 'horizontal' | 'vertical' | 'float' | 'window' | 'maximize';
-export type DropMode = 'all' | 'vertical' | 'horizontal' | 'none';
+export type DropMode = ('left' | 'right' | 'bottom' | 'top' | 'horizontal' | 'vertical')[] | null;
 
 export interface TabBase {
   /**
@@ -297,6 +297,7 @@ export interface LayoutData extends LayoutBase {
    * keep the last loaded layout to prevent unnecessary reloading
    */
   loadedFrom?: LayoutBase;
+
 }
 
 export type DropDirection =

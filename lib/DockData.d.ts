@@ -86,7 +86,7 @@ interface DockDataBase {
     maxHeight?: number;
 }
 export declare type DockMode = 'horizontal' | 'vertical' | 'float' | 'window' | 'maximize';
-export declare type DropMode = 'all' | 'vertical' | 'horizontal' | 'none';
+export declare type DropMode = ('left' | 'right' | 'bottom' | 'top' | 'horizontal' | 'vertical')[] | null;
 export interface TabBase {
     /**
      * id must be unique

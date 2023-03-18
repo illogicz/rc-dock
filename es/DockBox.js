@@ -36,7 +36,6 @@ export class DockBox extends React.PureComponent {
             console.log(sizes);
             let { children } = this.props.boxData;
             if (children.length !== sizes.length) {
-                debugger;
                 return;
             }
             for (let i = 0; i < children.length; ++i) {
@@ -86,7 +85,7 @@ export class DockBox extends React.PureComponent {
         if (flexShrink < 1) {
             flexShrink = 1;
         }
-        //maxWidth, maxHeight
+        console.log("render box", maxWidth, maxHeight);
         return (React.createElement("div", { ref: this.getRef, className: cls, "data-dockid": id, style: { minWidth, minHeight, maxWidth, maxHeight, flex: `${flexGrow} ${flexShrink} ${size}px` } }, childrenRender));
     }
 }

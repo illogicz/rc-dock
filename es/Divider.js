@@ -89,7 +89,9 @@ export class Divider extends React.PureComponent {
             let box = this.boxData;
             if (!(e.event.shiftKey || e.event.ctrlKey || e.event.altKey)) {
                 const after = box.afterDivider.findIndex(d > 0 ? shrinkable : growable);
+                console.log(box.afterDivider[0]);
                 const before = findLastIndex(box.beforeDivider, d > 0 ? growable : shrinkable);
+                console.log(before, after);
                 if (before < 0 || after < 0)
                     return;
                 box = box.getRange(before, after);

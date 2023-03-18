@@ -38,14 +38,20 @@ export class DockDropEdge extends React.PureComponent<DockDropEdgeProps, any> {
     let right = (rect.right - e.clientX) / widthRate;
     let top = (e.clientY - rect.top) / heightRate;
     let bottom = (rect.bottom - e.clientY) / heightRate;
-    let min = Math.min(left, right, top, bottom);
-    const { dropMode } = this.props.panelData;
-    if (dropMode === 'vertical' || dropMode === 'none') {
-      left = right = NaN
+
+    const {dropMode} = this.props.panelData;
+    if (dropMode) {
+      if (dropMode.indexOf('vertical') < 0) {
+        if (dropMode.indexOf('top') < 0) top = NaN;
+        if (dropMode.indexOf('bottom') < 0) bottom = NaN;
+      }
+      if (dropMode.indexOf('horizontal') < 0) {
+        if (dropMode.indexOf('left') < 0) left = NaN;
+        if (dropMode.indexOf('right') < 0) right = NaN;
+      }
     }
-    if (dropMode === 'horizontal' || dropMode === 'none') {
-      top = bottom = NaN;
-    }
+
+    let min = Math.min(...[left, right, top, bottom].filter(n => !isNaN(n)));
 
     let depth = 0;
     if (group.disableDock || samePanel) {
@@ -94,7 +100,7 @@ export class DockDropEdge extends React.PureComponent<DockDropEdgeProps, any> {
   getDirection(e: DragState, group: TabGroup, samePanel: boolean, tabLength: number): {direction: DropDirection, mode?: DockMode, depth: number;} {
     const ret = this.getDirectionInternal(e, group, samePanel, tabLength);
     e = Object.assign(Object.create(Object.getPrototypeOf(e)), e);
-    console.log({ e, group, samePanel });
+    console.log({e, group, samePanel});
     console.log(this.props.panelData)
     const from = this.props.dropFromPanel;
     const source = this.getSource();

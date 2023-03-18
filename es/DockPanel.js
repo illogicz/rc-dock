@@ -234,6 +234,7 @@ export class DockPanel extends React.PureComponent {
         }
     }
     render() {
+        var _a;
         let { dropFromPanel, draggingHeader } = this.state;
         let { panelData, size } = this.props;
         let { minWidth, minHeight, maxWidth, maxHeight, group, id, parent, panelLock } = panelData;
@@ -284,7 +285,7 @@ export class DockPanel extends React.PureComponent {
             style.zIndex = panelData.z;
         }
         let droppingLayer;
-        if (dropFromPanel && panelData.dropMode !== 'none') {
+        if (dropFromPanel && ((_a = panelData.dropMode) === null || _a === void 0 ? void 0 : _a.length) !== 0) {
             let dropFromGroup = this.context.getGroup(dropFromPanel.group);
             let dockId = this.context.getDockId();
             if (!dropFromGroup.tabLocked || DragState.getData('tab', dockId) == null) {
