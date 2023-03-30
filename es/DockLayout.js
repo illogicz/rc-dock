@@ -21,6 +21,7 @@ import * as Serializer from "./Serializer";
 import * as DragManager from "./dragdrop/DragManager";
 import { MaxBox } from "./MaxBox";
 import { WindowBox } from "./WindowBox";
+import { isBox, isPanel, isTab } from "./Utils";
 class DockPortalManager extends React.PureComponent {
     constructor() {
         super(...arguments);
@@ -95,7 +96,7 @@ export class DockLayout extends DockPortalManager {
         this._onWindowResize = debounce(() => {
             let layout = this.getLayout();
             if (this._ref) {
-                let newLayout = Algorithm.fixFloatPanelPos(layout, this._ref.offsetWidth, this._ref.offsetHeight);
+                let newLayout = Algorithm.fixFloatPos(layout, this._ref.offsetWidth, this._ref.offsetHeight);
                 newLayout = Algorithm.fixLayoutData(newLayout, this.getLayoutSize(), this.props.groups); // panel parent might need a fix
                 this.changeLayout(newLayout, null, 'move');
             }
@@ -162,6 +163,21 @@ export class DockLayout extends DockPortalManager {
      * @param floatPosition @inheritDoc
      */
     dockMove(source, target, direction, floatPosition) {
+        console.log("dockmove", {
+            source: Object.assign({}, source),
+            target: Object.assign({}, target),
+            direction
+        });
+        if (source === target) {
+            if (isPanel(source) || isTab(source)) {
+                console.warn("cannot dock panel to itself");
+                debugger;
+                return;
+            }
+        }
+        // const srcPanel = isPanel(source); //'tabs' in source;
+        // const srcTab = isTab(source);
+        // const srcBox = isBox(source);
         let layout = this.getLayout();
         if (direction === 'maximize') {
             layout = Algorithm.maximize(layout, source);
@@ -170,51 +186,56 @@ export class DockLayout extends DockPortalManager {
         else if (direction === 'front') {
             layout = Algorithm.moveToFront(layout, source);
         }
-        else {
+        else if (!isBox(source)) {
             layout = Algorithm.removeFromLayout(layout, source);
         }
-        if (typeof target === 'string') {
-            target = this.find(target, Algorithm.Filter.All);
-        }
-        else {
-            target = Algorithm.getUpdatedObject(target); // target might change during removeTab
-        }
         if (direction === 'float') {
-            let newPanel = Algorithm.converToPanel(source);
-            newPanel.z = Algorithm.nextZIndex(null);
+            const newSource = isTab(source) ? Algorithm.converToPanel(source) : source;
+            newSource.z = Algorithm.nextZIndex(null);
             if (this.state.dropRect || floatPosition) {
-                layout = Algorithm.floatPanel(layout, newPanel, this.state.dropRect || floatPosition);
+                layout = Algorithm.floatElement(layout, newSource, this.state.dropRect || floatPosition);
             }
             else {
-                layout = Algorithm.floatPanel(layout, newPanel);
+                layout = Algorithm.floatElement(layout, newSource);
                 if (this._ref) {
-                    layout = Algorithm.fixFloatPanelPos(layout, this._ref.offsetWidth, this._ref.offsetHeight);
+                    layout = Algorithm.fixFloatPos(layout, this._ref.offsetWidth, this._ref.offsetHeight);
                 }
             }
         }
         else if (direction === 'new-window') {
-            let newPanel = Algorithm.converToPanel(source);
-            layout = Algorithm.panelToWindow(layout, newPanel);
+            if (isTab(source) || isPanel(source)) {
+                let newPanel = Algorithm.converToPanel(source);
+                layout = Algorithm.panelToWindow(layout, newPanel);
+            }
         }
         else if (target) {
-            if ('tabs' in target) {
-                // pandel target
-                if (direction === 'middle') {
-                    layout = Algorithm.addTabToPanel(layout, source, target);
-                }
-                else {
-                    let newPanel = Algorithm.converToPanel(source);
-                    layout = Algorithm.dockPanelToPanel(layout, newPanel, target, direction);
-                }
-            }
-            else if ('children' in target) {
-                // box target
-                let newPanel = Algorithm.converToPanel(source);
-                layout = Algorithm.dockPanelToBox(layout, newPanel, target, direction);
+            // target might change during removeTab
+            const targ = typeof target === 'string' ?
+                this.find(target, Algorithm.Filter.All) :
+                target = Algorithm.getUpdatedObject(target);
+            if (isBox(source)) {
+                console.warn("cannot move boxes yet");
             }
             else {
-                // tab target
-                layout = Algorithm.addNextToTab(layout, source, target, direction);
+                if (isPanel(targ)) {
+                    // pandel target
+                    if (direction === 'middle') {
+                        layout = Algorithm.addTabToPanel(layout, source, targ);
+                    }
+                    else {
+                        let newPanel = Algorithm.converToPanel(source);
+                        layout = Algorithm.dockPanelToPanel(layout, newPanel, targ, direction);
+                    }
+                }
+                else if (isBox(targ)) {
+                    // box target
+                    let newPanel = Algorithm.converToPanel(source);
+                    layout = Algorithm.dockPanelToBox(layout, newPanel, targ, direction);
+                }
+                else {
+                    // tab target
+                    layout = Algorithm.addNextToTab(layout, source, targ, direction);
+                }
             }
         }
         if (layout !== this.getLayout()) {
@@ -491,7 +512,7 @@ export class DockLayout extends DockPortalManager {
     static loadLayoutData(savedLayout, props, size) {
         let { defaultLayout, loadTab, afterPanelLoaded, groups } = props;
         let layout = Serializer.loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLoaded);
-        layout = Algorithm.fixFloatPanelPos(layout, size.width, size.height);
+        layout = Algorithm.fixFloatPos(layout, size.width, size.height);
         layout = Algorithm.fixLayoutData(layout, size, groups);
         layout.loadedFrom = savedLayout;
         return layout;

@@ -3,8 +3,10 @@ import {
   LayoutData,
   PanelData, BoxBase, LayoutBase, PanelBase, TabBase,
   TabData,
-  maximePlaceHolderId
+  maximePlaceHolderId,
+  FloatBase
 } from "./DockData";
+import {floatData} from "./Utils";
 
 interface DefaultLayoutCache {
   panels: Map<string, PanelData>;
@@ -69,14 +71,11 @@ export function saveLayoutData(
         tabs.push(savedTab);
       }
     }
-    let { id, size, activeId, dropMode, group} = panelData;
-    let savedPanel: PanelBase;
-    if (panelData.parent.mode === 'float' || panelData.parent.mode === 'window') {
-      let {x, y, z, w, h} = panelData;
-      savedPanel = { id, size, tabs, group, dropMode, activeId, x, y, z, w, h};
-    } else {
-      savedPanel = { id, size, tabs, group, dropMode, activeId};
-    }
+    let {id, size, activeId, dropMode, group} = panelData;
+    let savedPanel: PanelBase = {
+      id, size, tabs, group, dropMode, activeId,
+      ...floatData(panelData),
+    };
     if (afterPanelSaved) {
       afterPanelSaved(savedPanel, panelData);
     }
@@ -93,7 +92,7 @@ export function saveLayoutData(
       }
     }
     let {id, size, mode} = boxData;
-    return {id, size, mode, children};
+    return {id, size, mode, children, ...floatData(boxData)};
   }
 
   return {
@@ -135,9 +134,9 @@ export function loadLayoutData(
     }
     let panelData: PanelData;
     if (w || h || x || y || z) {
-      panelData = { id, size, activeId, dropMode, group, x, y, z, w, h, tabs};
+      panelData = {id, size, activeId, dropMode, group, x, y, z, w, h, tabs};
     } else {
-      panelData = { id, size, activeId, dropMode, group, tabs};
+      panelData = {id, size, activeId, dropMode, group, tabs};
     }
     if (savedPanel.id === maximePlaceHolderId) {
       panelData.panelLock = {};
@@ -161,8 +160,8 @@ export function loadLayoutData(
         children.push(loadBoxData(child));
       }
     }
-    let {id, size, mode} = savedBox;
-    return {id, size, mode, children};
+    let {id, size, mode, w, h, x, y, z} = savedBox;
+    return {id, size, mode, children, w, h, x, y, z};
   }
 
   return {

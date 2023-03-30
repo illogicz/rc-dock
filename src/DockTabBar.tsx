@@ -1,8 +1,7 @@
-import * as React from "react";
-import {DragDropDiv} from "./dragdrop/DragDropDiv";
-import * as DragManager from "./dragdrop/DragManager";
 import type {TabNavListProps} from "rc-tabs/lib/TabNavList";
-import {DockContextType} from "./DockData";
+import * as React from "react";
+import {DockContextType, PanelData} from "./DockData";
+import {FloatHeader} from "./FloatDrag";
 
 /**
  * @return returns true if navigation is handled in local tab move, otherwise returns false
@@ -32,17 +31,18 @@ function checkLocalTabMove(key: string, tabbar: HTMLDivElement): boolean {
 }
 
 
-interface DockTabBarProps extends TabNavListProps {
+export interface DockTabBarProps extends TabNavListProps {
+  data: PanelData,
+  onUpdate: () => void;
   isMaximized: boolean;
-  onDragStart?: DragManager.DragHandler;
-  onDragMove?: DragManager.DragHandler;
-  onDragEnd?: DragManager.DragHandler;
+  setDragging: (dragging: boolean) => void;
   TabNavList: React.ComponentType<TabNavListProps>;
 }
 
 export function DockTabBar(props: DockTabBarProps) {
   const {
-    onDragStart, onDragMove, onDragEnd, TabNavList, isMaximized,
+    //onDragStart, onDragMove, onDragEnd, onDragOver, onDrop, 
+    TabNavList, isMaximized, data, onUpdate, setDragging,
     ...restProps
   } = props;
 
@@ -63,18 +63,9 @@ export function DockTabBar(props: DockTabBarProps) {
       e.preventDefault();
     }
   };
-
   return (
-    <DragDropDiv onDragStartT={onDragStart}
-                 onDragMoveT={onDragMove}
-                 onDragEndT={onDragEnd}
-                 role="tablist"
-                 className="dock-bar"
-                 onKeyDown={onKeyDown}
-                 getRef={getRef}
-                 tabIndex={-1}
-    >
-      <TabNavList {...restProps}/>
-    </DragDropDiv>
+    <FloatHeader data={data} getRef={getRef} setDragging={setDragging} onUpdate={onUpdate} className="dock-bar" role="tablist" onKeyDown={onKeyDown}>
+      <TabNavList {...restProps} />
+    </FloatHeader>
   );
 }

@@ -5,13 +5,14 @@ import Menu, {MenuItem} from 'rc-menu';
 import Dropdown from 'rc-dropdown';
 import * as DragManager from "./dragdrop/DragManager";
 import {DragDropDiv} from "./dragdrop/DragDropDiv";
-import {DockTabBar} from "./DockTabBar";
+import {DockTabBar, DockTabBarProps} from "./DockTabBar";
 import DockTabPane from "./DockTabPane";
 import {getFloatPanelSize} from "./Algorithm";
 import {WindowBox} from "./WindowBox";
 import {groupClassNames} from "./Utils";
 import classNames from "classnames";
-import { RenderTabBar } from "rc-tabs/lib/interface";
+import {RenderTabBar} from "rc-tabs/lib/interface";
+import {TabNavListProps} from "rc-tabs/lib/TabNavList";
 
 function findParentPanel(element: HTMLElement) {
   for (let i = 0; i < 10; ++i) {
@@ -159,13 +160,13 @@ export class TabCache {
     }
     let tab = (
       <DragDropDiv getRef={this.getRef} onDragStartT={onDragStart} role="tab" aria-selected={parent.activeId === id}
-                   onDragOverT={onDragOver} onDropT={onDrop} onDragLeaveT={onDragLeave}>
+        onDragOverT={onDragOver} onDropT={onDrop} onDragLeaveT={onDragLeave}>
         {title}
         {closable ?
           <div className="dock-tab-close-btn" onClick={this.onCloseClick} onMouseDown={e => e.stopPropagation()} />
           : null
         }
-        <div className="dock-tab-hit-area" ref={this.getHitAreaRef}/>
+        <div className="dock-tab-hit-area" ref={this.getHitAreaRef} />
       </DragDropDiv>
     );
 
@@ -182,11 +183,19 @@ export class TabCache {
   }
 }
 
+export type RenderDockTabBar = (props: DockTabBarProps, DefaultTabBar: typeof DockTabBar) => React.ReactElement;
+
+
 interface Props {
   panelData: PanelData;
-  onPanelDragStart: DragManager.DragHandler;
-  onPanelDragMove: DragManager.DragHandler;
-  onPanelDragEnd: DragManager.DragHandler;
+  onUpdate: () => void
+  setDragging: (dragging: boolean) => void;
+  // onPanelDragStart: DragManager.DragHandler;
+  // onPanelDragMove: DragManager.DragHandler;
+  // onPanelDragEnd: DragManager.DragHandler;
+  // onPanelDragOver: DragManager.DragHandler;
+  // onPanelDrop: DragManager.DropHandler;
+  // onPanelDragLeave: DragManager.DropHandler;
 }
 
 export class DockTabs extends React.PureComponent<Props> {
@@ -262,14 +271,13 @@ export class DockTabs extends React.PureComponent<Props> {
   }
 
   renderTabBar: RenderTabBar = (props, TabNavList) => {
-    let {panelData, onPanelDragStart, onPanelDragMove, onPanelDragEnd} = this.props;
+    let {panelData, setDragging} = this.props;
     let {group: groupName, panelLock} = panelData;
     let group = this.context.getGroup(groupName);
-    let {panelExtra} = group;
+    let {panelExtra, renderTabBar} = group;
     //props.
     let maximizable = group.maximizable;
     if (panelData.parent.mode === 'window') {
-      onPanelDragStart = null;
       maximizable = false;
     }
 
@@ -286,18 +294,31 @@ export class DockTabs extends React.PureComponent<Props> {
       panelExtraContent = panelExtra(panelData, this.context);
     } else if (maximizable || showNewWindowButton) {
       panelExtraContent = <div
-        className={panelData.parent.mode === 'maximize' ? "dock-panel-min-btn" : "dock-panel-max-btn" }
+        className={panelData.parent.mode === 'maximize' ? "dock-panel-min-btn" : "dock-panel-max-btn"}
         onClick={maximizable ? this.onMaximizeClick : null}
       />;
       if (showNewWindowButton) {
         panelExtraContent = this.addNewWindowMenu(panelExtraContent, !maximizable);
       }
     }
-    return (
-      <DockTabBar onDragStart={onPanelDragStart} onDragMove={onPanelDragMove} onDragEnd={onPanelDragEnd}
-                  TabNavList={TabNavList} isMaximized={panelData.parent.mode === 'maximize'} {...props}
-                  extra={panelExtraContent}/>
-    );
+
+    const barProps: DockTabBarProps = {
+      onUpdate: this.props.onUpdate,
+      setDragging,
+      data: panelData,
+      TabNavList: TabNavList,
+      isMaximized: panelData.parent.mode === 'maximize',
+      ...props,
+      extra: panelExtraContent
+    }
+
+    return renderTabBar?.(barProps, DockTabBar) ?? <DockTabBar {...barProps} />
+
+    // return (
+    //   <DockTabBar onDragStart={onPanelDragStart} onDragMove={onPanelDragMove} onDragEnd={onPanelDragEnd}
+    //     TabNavList={TabNavList} isMaximized={panelData.parent.mode === 'maximize'} {...props}
+    //     extra={panelExtraContent} />
+    // );
   };
 
   onTabChange = (activeId: string) => {
@@ -326,12 +347,12 @@ export class DockTabs extends React.PureComponent<Props> {
 
     return (
       <Tabs prefixCls="dock"
-            moreIcon={moreIcon}
-            animated={animated}
-            renderTabBar={this.renderTabBar}
-            activeKey={activeId}
-            onChange={this.onTabChange}
-            popupClassName={classNames(groupClassNames(group))}
+        moreIcon={moreIcon}
+        animated={animated}
+        renderTabBar={this.renderTabBar}
+        activeKey={activeId}
+        onChange={this.onTabChange}
+        popupClassName={classNames(groupClassNames(group))}
       >
         {children}
       </Tabs>

@@ -3,6 +3,7 @@ import * as React from "react";
 import { DragDropDiv } from "./dragdrop/DragDropDiv";
 class BoxDataCache {
     constructor(data) {
+        var _a, _b;
         this.beforeSize = 0;
         this.beforeMinSize = 0;
         this.beforeMaxSize = 0;
@@ -17,14 +18,14 @@ class BoxDataCache {
             if (child.minSize > 0) {
                 this.beforeMinSize += child.minSize;
             }
-            this.beforeMaxSize += child.maxSize;
+            this.beforeMaxSize += (_a = child.maxSize) !== null && _a !== void 0 ? _a : Number.POSITIVE_INFINITY;
         }
         for (let child of this.afterDivider) {
             this.afterSize += child.size;
             if (child.minSize > 0) {
                 this.afterMinSize += child.minSize;
             }
-            this.afterMaxSize += child.maxSize;
+            this.afterMaxSize += (_b = child.maxSize) !== null && _b !== void 0 ? _b : Number.POSITIVE_INFINITY;
         }
     }
     getRange(before, after) {
@@ -35,8 +36,8 @@ class BoxDataCache {
         });
     }
 }
-const shrinkable = (child) => child.size > child.minSize;
-const growable = (child) => child.size < child.maxSize;
+const shrinkable = (child) => { var _a; return child.size > ((_a = child.minSize) !== null && _a !== void 0 ? _a : 1); };
+const growable = (child) => !child.maxSize || (child.size < child.maxSize);
 // split size among children
 function spiltSize(newSize, oldSize, children) {
     let reservedSize = -1;
@@ -63,7 +64,7 @@ function spiltSize(newSize, oldSize, children) {
         }
         for (let i of indexes) { //let i = 0; i < children.length; ++i) {
             let size = children[i].size * ratio;
-            if (size > children[i].maxSize) {
+            if (children[i].maxSize && (size > children[i].maxSize)) {
                 size = children[i].maxSize;
             }
             if (size < children[i].minSize) {
@@ -92,7 +93,7 @@ export class Divider extends React.PureComponent {
                 console.log(box.afterDivider[0]);
                 const before = findLastIndex(box.beforeDivider, d > 0 ? growable : shrinkable);
                 console.log(before, after);
-                if (before < 0 || after < 0)
+                if (before < 0 && after < 0)
                     return;
                 box = box.getRange(before, after);
             }

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Filter } from "./Algorithm";
+import { RenderDockTabBar } from "./DockTabs";
 export interface TabGroup {
     /**
      * Whether tab can be dragged into float layer.
@@ -69,6 +70,7 @@ export interface TabGroup {
      * Override the default `moreIcon`
      */
     moreIcon?: React.ReactNode;
+    renderTabBar?: RenderDockTabBar;
 }
 /** @ignore */
 export declare const defaultGroup: TabGroup;
@@ -93,7 +95,7 @@ export interface TabBase {
      */
     id?: string;
 }
-export interface PanelBase {
+export interface PanelBase extends FloatBase {
     /**
      * id will be auto generated if it's undefined
      */
@@ -112,6 +114,12 @@ export interface PanelBase {
      * if group is undefined, it will be set to the group name of first tab
      */
     group?: string;
+    /**
+     * Limit Drop modes
+     */
+    dropMode?: DropMode;
+}
+export interface FloatBase {
     /** float mode only */
     x?: number;
     /** float mode only */
@@ -122,9 +130,8 @@ export interface PanelBase {
     w?: number;
     /** float mode only */
     h?: number;
-    dropMode?: DropMode;
 }
-export interface BoxBase {
+export interface BoxBase extends FloatBase {
     /**
      * id will be auto generated if it's undefined
      */
@@ -143,7 +150,7 @@ export interface LayoutBase {
     windowbox?: BoxBase;
     maxbox?: BoxBase;
 }
-interface BoxChild extends DockDataBase {
+export interface BoxChild extends DockDataBase {
     parent?: BoxData;
     widthFlex?: number;
     heightFlex?: number;
@@ -216,6 +223,7 @@ export interface PanelData extends PanelBase, BoxChild {
      * a locked panel can not be moved to float layer either
      */
     panelLock?: PanelLock;
+    renderTabBar?: RenderDockTabBar;
 }
 export interface TabPaneCache {
     id: string;
@@ -230,7 +238,6 @@ export interface LayoutData extends LayoutBase {
     dockbox: BoxData;
     /**
      * float box,
-     * Children must be PanelData, child box is not allowed
      */
     floatbox?: BoxData;
     /**

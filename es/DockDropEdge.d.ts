@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DockContext, DockMode, DropDirection, PanelData, TabGroup } from "./DockData";
+import { DockContext, DockMode, DropDirection, PanelData, TabData } from "./DockData";
 import { DragState } from "./dragdrop/DragManager";
 interface DockDropEdgeProps {
     panelData: PanelData;
@@ -12,10 +12,11 @@ export declare class DockDropEdge extends React.PureComponent<DockDropEdgeProps,
     _ref: HTMLDivElement;
     getRef: (r: HTMLDivElement) => void;
     private getDirectionInternal;
-    getDirection(e: DragState, group: TabGroup, samePanel: boolean, tabLength: number): {
+    getDirection(e: DragState): {
         direction: DropDirection;
-        mode?: DockMode;
         depth: number;
+        source?: PanelData | TabData;
+        move?: boolean;
     };
     getActualDepth(depth: number, mode: DockMode, direction: DropDirection): number;
     onDragOver: (e: DragState) => void;

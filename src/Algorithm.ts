@@ -1,19 +1,22 @@
+import {pick} from "lodash";
 import {
   BoxData,
   DockMode,
   DropDirection,
+  FloatBase,
   LayoutData, maximePlaceHolderId,
   PanelData,
   placeHolderStyle, TabBase,
   TabData,
   TabGroup
 } from "./DockData";
+import {floatData, isBox, isPanel} from "./Utils";
 
 const INF = Number.POSITIVE_INFINITY;
 
 let _watchObjectChange: WeakMap<any, any> = new WeakMap();
 
-export function getUpdatedObject(obj: any): any {
+export function getUpdatedObject<T>(obj: T): T {
   let result = _watchObjectChange.get(obj);
   if (result) {
     return getUpdatedObject(result);
@@ -227,13 +230,14 @@ export function dockPanelToPanel(layout: LayoutData, newPanel: PanelData, panel:
       newPanel.size = panel.size;
       newBox.children.splice(pos, 0, newPanel);
     } else {
-      let newChildBox: BoxData = {mode: dockMode, children: []};
-      newChildBox.size = panel.size;
-      if (afterPanel) {
-        newChildBox.children = [panel, newPanel];
-      } else {
-        newChildBox.children = [newPanel, panel];
-      }
+
+      let newChildBox: BoxData = {
+        mode: dockMode,
+        children: afterPanel ? [panel, newPanel] : [newPanel, panel],
+        size: panel.size,
+        ...floatData(panel)
+      };
+
       panel.parent = newChildBox;
       panel.size = 200;
       newPanel.parent = newChildBox;
@@ -265,13 +269,13 @@ export function dockPanelToBox(layout: LayoutData, newPanel: PanelData, box: Box
 
         newParentBox.children.splice(pos, 0, newPanel);
       } else {
-        let newChildBox: BoxData = {mode: dockMode, children: []};
-        newChildBox.size = box.size;
-        if (afterPanel) {
-          newChildBox.children = [box, newPanel];
-        } else {
-          newChildBox.children = [newPanel, box];
-        }
+        let newChildBox: BoxData = {
+          mode: dockMode,
+          children: afterPanel ? [box, newPanel] : [newPanel, box],
+          size: box.size,
+          ...floatData(box)
+        };
+
         box.parent = newChildBox;
         box.size = 280;
         newPanel.parent = newChildBox;
@@ -310,24 +314,27 @@ export function dockPanelToBox(layout: LayoutData, newPanel: PanelData, box: Box
     let newBox = clone(box);
     newBox.children.push(newPanel);
     return replaceBox(layout, box, newBox);
+  } else if (box === layout.floatbox) {
+    console.warn("can't dock panel to floatbox, use 'floatElement' instead");
+    debugger;
   }
 
   return layout;
 }
 
-export function floatPanel(
-  layout: LayoutData, newPanel: PanelData,
+export function floatElement(
+  layout: LayoutData, data: PanelData | BoxData,
   rect?: {left: number, top: number, width: number, height: number}
 ): LayoutData {
+
   let newBox = clone(layout.floatbox);
   if (rect) {
-    newPanel.x = rect.left;
-    newPanel.y = rect.top;
-    newPanel.w = rect.width;
-    newPanel.h = rect.height;
+    data.x = rect.left;
+    data.y = rect.top;
+    data.w = rect.width;
+    data.h = rect.height;
   }
-
-  newBox.children.push(newPanel);
+  newBox.children.push(data);
   return replaceBox(layout, layout.floatbox, newBox);
 }
 
@@ -398,31 +405,38 @@ function removeTab(layout: LayoutData, tab: TabData): LayoutData {
   return layout;
 }
 
-export function moveToFront(layout: LayoutData, source: TabData | PanelData): LayoutData {
+export function moveToFront(layout: LayoutData, source: TabData | PanelData | BoxData): LayoutData {
   if (source) {
-    let panelData: PanelData;
+    let data: PanelData | BoxData;
     let needUpdate = false;
     let changes: any = {};
-    if ('tabs' in source) {
-      panelData = source;
+    if (isPanel(source)) {
+      data = source;
+    } else if (isBox(source)) {
+      console.warn("box move TODO");
+      return;
     } else {
-      panelData = source.parent;
-      if (panelData.activeId !== source.id) {
+      data = source.parent;
+      if (data.activeId !== source.id) {
         // move tab to front
         changes.activeId = source.id;
         needUpdate = true;
       }
     }
-    if (panelData && panelData.parent && panelData.parent.mode === 'float') {
+    if (data && data.parent && data.parent.mode === 'float') {
       // move float panel to front
-      let newZ = nextZIndex(panelData.z);
-      if (newZ !== panelData.z) {
+      let newZ = nextZIndex(data.z);
+      if (newZ !== data.z) {
         changes.z = newZ;
         needUpdate = true;
       }
     }
     if (needUpdate) {
-      layout = replacePanel(layout, panelData, clone(panelData, changes));
+      if (isBox(data)) {
+        layout = replaceBox(layout, data, clone(data, changes));
+      } else {
+        layout = replacePanel(layout, data, clone(data, changes));
+      }
     }
   }
   return layout;
@@ -479,40 +493,40 @@ function maximizeTab(layout: LayoutData, tab: TabData): LayoutData {
 }
 
 // move float panel into the screen
-export function fixFloatPanelPos(layout: LayoutData, layoutWidth?: number, layoutHeight?: number): LayoutData {
+export function fixFloatPos(layout: LayoutData, layoutWidth?: number, layoutHeight?: number): LayoutData {
   let layoutChanged = false;
   if (layout && layout.floatbox && layoutWidth > 200 && layoutHeight > 200) {
     let newFloatChildren = layout.floatbox.children.concat();
     for (let i = 0; i < newFloatChildren.length; ++i) {
-      let panel: PanelData = newFloatChildren[i] as PanelData;
-      let panelChange: any = {};
-      if (!(panel.w > 0)) {
-        panelChange.w = Math.round(layoutWidth / 3);
-      } else if (panel.w > layoutWidth) {
-        panelChange.w = layoutWidth;
+      let data: PanelData = newFloatChildren[i] as PanelData;
+      let dataChange: FloatBase = {};
+      if (!(data.w > 0)) {
+        dataChange.w = Math.round(layoutWidth / 3);
+      } else if (data.w > layoutWidth) {
+        dataChange.w = layoutWidth;
       }
-      if (!(panel.h > 0)) {
-        panelChange.h = Math.round(layoutHeight / 3);
-      } else if (panel.h > layoutHeight) {
-        panelChange.h = layoutHeight;
+      if (!(data.h > 0)) {
+        dataChange.h = Math.round(layoutHeight / 3);
+      } else if (data.h > layoutHeight) {
+        dataChange.h = layoutHeight;
       }
-      if (typeof panel.y !== 'number') {
-        panelChange.y = (layoutHeight - (panelChange.h || panel.h)) >> 1;
-      } else if (panel.y > layoutHeight - 16) {
-        panelChange.y = Math.max(layoutHeight - 16 - (panel.h >> 1), 0);
-      } else if (!(panel.y >= 0)) {
-        panelChange.y = 0;
+      if (typeof data.y !== 'number') {
+        dataChange.y = (layoutHeight - (dataChange.h || data.h)) >> 1;
+      } else if (data.y > layoutHeight - 16) {
+        dataChange.y = Math.max(layoutHeight - 16 - (data.h >> 1), 0);
+      } else if (!(data.y >= 0)) {
+        dataChange.y = 0;
       }
 
-      if (typeof panel.x !== 'number') {
-        panelChange.x = (layoutWidth - (panelChange.w || panel.w)) >> 1;
-      } else if (panel.x + panel.w < 16) {
-        panelChange.x = 16 - (panel.w >> 1);
-      } else if (panel.x > layoutWidth - 16) {
-        panelChange.x = layoutWidth - 16 - (panel.w >> 1);
+      if (typeof data.x !== 'number') {
+        dataChange.x = (layoutWidth - (dataChange.w || data.w)) >> 1;
+      } else if (data.x + data.w < 16) {
+        dataChange.x = 16 - (data.w >> 1);
+      } else if (data.x > layoutWidth - 16) {
+        dataChange.x = layoutWidth - 16 - (data.w >> 1);
       }
-      if (Object.keys(panelChange).length) {
-        newFloatChildren[i] = clone(panel, panelChange);
+      if (Object.keys(dataChange).length) {
+        newFloatChildren[i] = clone(data, dataChange);
         layoutChanged = true;
       }
     }
@@ -545,11 +559,10 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
     }
     d.minWidth = 0; //d.parent ? 0 : size.width;
     d.minHeight = 0; //d.parent ? 0 : size.height;
-    d.maxWidth = d.parent?.maxWidth ?? size.width;
-    d.maxHeight = d.parent?.maxHeight ?? size.height;
+    d.maxWidth = null; //d.parent?.maxWidth ?? size.width;
+    d.maxHeight = null; //d.parent?.maxHeight ?? size.height;
     d.widthFlex = null;
     d.heightFlex = null;
-    console.log("fix", d.id, d.maxWidth, d.maxHeight)
   }
 
   function fixPanelData(panel: PanelData): PanelData {
@@ -580,8 +593,8 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
       if (tab.minWidth > panel.minWidth) panel.minWidth = tab.minWidth;
       if (tab.minHeight > panel.minHeight) panel.minHeight = tab.minHeight;
 
-      if (tab.maxWidth) panel.maxWidth = Math.min(panel.maxWidth, tab.maxWidth);
-      if (tab.maxHeight) panel.maxHeight = Math.min(panel.maxHeight, tab.maxHeight);
+      if (tab.maxWidth) panel.maxWidth = Math.min(panel.maxWidth ?? INF, tab.maxWidth);
+      if (tab.maxHeight) panel.maxHeight = Math.min(panel.maxHeight ?? INF, tab.maxHeight);
     }
     if (!findActiveId && panel.tabs.length) {
       panel.activeId = panel.tabs[0].id;
@@ -601,10 +614,10 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
       if (panel.minHeight < panelLock.minHeight) {
         panel.minHeight = panelLock.minHeight;
       }
-      if (panelLock.maxWidth && panelLock.maxWidth < panel.maxWidth) {
+      if (panelLock.maxWidth && panelLock.maxWidth < (panel.maxWidth ?? INF)) {
         panel.maxWidth = panelLock.maxWidth;
       }
-      if (panelLock.maxHeight && panelLock.maxHeight < panel.maxHeight) {
+      if (panelLock.maxHeight && panelLock.maxHeight < (panel.maxHeight ?? INF)) {
         panel.maxHeight = panelLock.maxHeight;
       }
       if (panel.panelLock.widthFlex != null) {
@@ -625,8 +638,8 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
   function fixBoxData(box: BoxData): BoxData {
     fixPanelOrBox(box);
 
-    let maxWidth = box.mode === "vertical" ? box.maxWidth : 0;
-    let maxHeight = box.mode === "horizontal" ? box.maxHeight : 0;
+    let maxWidth = 0; // box.mode === "vertical" ? INF : 0;
+    let maxHeight = 0; // box.mode === "horizontal" ? INF : 0;
 
     for (let i = 0; i < box.children.length; ++i) {
       let child = box.children[i];
@@ -655,6 +668,7 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
           } else {
             // sub child can be moved up one layer
             subChild.size = child.size;
+            Object.assign(subChild, floatData(child));
             box.children[i] = subChild;
           }
           --i;
@@ -680,8 +694,8 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
           if (child.minWidth > 0) box.minWidth += child.minWidth;
           if (child.minHeight > box.minHeight) box.minHeight = child.minHeight;
 
-          maxWidth += child.maxWidth;
-          if (child.maxHeight < box.maxHeight) maxHeight = child.maxHeight;
+          maxWidth += child.maxWidth ?? INF;
+          if (child.maxHeight && maxHeight) maxHeight = Math.max(child.maxHeight, maxHeight);
 
           if (child.widthFlex != null) {
             box.widthFlex = maxFlex(box.widthFlex, child.widthFlex);
@@ -694,8 +708,8 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
           if (child.minWidth > box.minWidth) box.minWidth = child.minWidth;
           if (child.minHeight > 0) box.minHeight += child.minHeight;
 
-          maxHeight += child.maxHeight;
-          if (child.maxWidth < box.maxWidth) maxWidth = child.maxWidth;
+          maxHeight += child.maxHeight ?? INF;
+          if (child.maxWidth && maxWidth) maxWidth = Math.max(child.maxWidth, maxWidth)
 
           if (child.heightFlex != null) {
             box.heightFlex = maxFlex(box.heightFlex, child.heightFlex);
@@ -705,6 +719,7 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
           }
           break;
       }
+
     }
     // add divider size
     if (box.children.length > 1) {
@@ -723,25 +738,33 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
     // console.log(box.id, box.mode);
     // console.table(box.children.map(c => ({id: c.id, maxW: c.maxWidth, maxH: c.maxHeight})));
     // console.log({maxWidth, boxW: box.maxWidth, maxHeight, boxH: box.maxHeight});
-    if (maxWidth < box.maxWidth) box.maxWidth = maxWidth;
-    if (maxHeight < box.maxHeight) box.maxHeight = maxHeight;
+    if (isFinite(maxWidth) && maxWidth > 0) box.maxWidth = maxWidth;
+    if (isFinite(maxHeight) && maxHeight > 0) box.maxHeight = maxHeight;
 
-    switch (box.mode) {
-      case 'horizontal':
-        const hspace = box.maxWidth - box.minWidth;
-        for (let i = 0; i < box.children.length; ++i) {
-          let child = box.children[i];
-          child.maxWidth = Math.min(child.maxWidth, hspace + child.minWidth);
-        }
-        break;
-      case 'vertical':
-        const vspace = box.maxHeight - box.minHeight;
-        for (let i = 0; i < box.children.length; ++i) {
-          let child = box.children[i];
-          child.maxHeight = Math.min(child.maxHeight, vspace + child.minHeight);
-        }
-        break;
+    // switch (box.mode) {
+    //   case 'horizontal':
+    //     const hspace = box.maxWidth - box.minWidth;
+    //     for (let i = 0; i < box.children.length; ++i) {
+    //       let child = box.children[i];
+    //       child.maxWidth = Math.min(child.maxWidth, hspace + child.minWidth);
+    //     }
+    //     break;
+    //   case 'vertical':
+    //     const vspace = box.maxHeight - box.minHeight;
+    //     for (let i = 0; i < box.children.length; ++i) {
+    //       let child = box.children[i];
+    //       child.maxHeight = Math.min(child.maxHeight, vspace + child.minHeight);
+    //     }
+    //     break;
+    // }
+
+    if (box.parent?.mode === "float") {
+      if (box.minWidth && box.w < box.minWidth) box.w = box.minWidth;
+      if (box.maxWidth && box.w > box.maxWidth) box.w = box.maxWidth;
+      if (box.minHeight && box.h < box.minHeight) box.h = box.minHeight;
+      if (box.maxHeight && box.h < box.maxHeight) box.h = box.maxHeight;
     }
+
     return box;
   }
 
@@ -763,6 +786,7 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
     layout.maxbox = {mode: 'maximize', children: [], size: 1};
   }
 
+
   fixBoxData(layout.dockbox);
   fixBoxData(layout.floatbox);
   fixBoxData(layout.windowbox);
@@ -783,6 +807,9 @@ export function fixLayoutData(layout: LayoutData, size: {width: number, height: 
       }
     }
   }
+  layout.dockbox.maxHeight = null;
+  layout.dockbox.minHeight = null;
+
   layout.dockbox.parent = null;
   layout.floatbox.parent = null;
   layout.windowbox.parent = null;
@@ -810,6 +837,7 @@ export function replacePanel(layout: LayoutData, panel: PanelData, newPanel: Pan
 }
 
 function replaceBox(layout: LayoutData, box: BoxData, newBox: BoxData): LayoutData {
+
   for (let child of newBox.children) {
     child.parent = newBox;
   }

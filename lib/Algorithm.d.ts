@@ -1,5 +1,5 @@
 import { BoxData, DropDirection, LayoutData, PanelData, TabBase, TabData, TabGroup } from "./DockData";
-export declare function getUpdatedObject(obj: any): any;
+export declare function getUpdatedObject<T>(obj: T): T;
 export declare function nextId(): string;
 export declare function nextZIndex(current?: number): number;
 export declare enum Filter {
@@ -22,7 +22,7 @@ export declare function addTabToPanel(layout: LayoutData, source: TabData | Pane
 export declare function converToPanel(source: TabData | PanelData): PanelData;
 export declare function dockPanelToPanel(layout: LayoutData, newPanel: PanelData, panel: PanelData, direction: DropDirection): LayoutData;
 export declare function dockPanelToBox(layout: LayoutData, newPanel: PanelData, box: BoxData, direction: DropDirection): LayoutData;
-export declare function floatPanel(layout: LayoutData, newPanel: PanelData, rect?: {
+export declare function floatElement(layout: LayoutData, data: PanelData | BoxData, rect?: {
     left: number;
     top: number;
     width: number;
@@ -30,9 +30,9 @@ export declare function floatPanel(layout: LayoutData, newPanel: PanelData, rect
 }): LayoutData;
 export declare function panelToWindow(layout: LayoutData, newPanel: PanelData): LayoutData;
 export declare function removeFromLayout(layout: LayoutData, source: TabData | PanelData): LayoutData;
-export declare function moveToFront(layout: LayoutData, source: TabData | PanelData): LayoutData;
+export declare function moveToFront(layout: LayoutData, source: TabData | PanelData | BoxData): LayoutData;
 export declare function maximize(layout: LayoutData, source: TabData | PanelData): LayoutData;
-export declare function fixFloatPanelPos(layout: LayoutData, layoutWidth?: number, layoutHeight?: number): LayoutData;
+export declare function fixFloatPos(layout: LayoutData, layoutWidth?: number, layoutHeight?: number): LayoutData;
 export declare function fixLayoutData(layout: LayoutData, size: {
     width: number;
     height: number;

@@ -2,8 +2,8 @@ import * as React from "react";
 import { DragState } from "./dragdrop/DragManager";
 export interface DividerChild {
     size: number;
-    minSize: number;
-    maxSize: number;
+    minSize?: number;
+    maxSize?: number;
 }
 export interface DividerData {
     element: HTMLElement;

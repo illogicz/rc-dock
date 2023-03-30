@@ -8,6 +8,7 @@ import {getFloatPanelSize, nextZIndex} from "./Algorithm";
 import {DockDropEdge} from "./DockDropEdge";
 import {groupClassNames} from "./Utils";
 import classNames from "classnames";
+import {FloatResizer} from "./FloatDrag";
 
 interface Props {
   panelData: PanelData;
@@ -76,175 +77,6 @@ export class DockPanel extends React.PureComponent<Props, State> {
     }
   }
 
-  // used both by dragging head and corner
-  _movingX: number;
-  _movingY: number;
-  // drop to move in float mode
-  onPanelHeaderDragStart = (event: DragState) => {
-    let {panelData} = this.props;
-    let {parent, x, y, z} = panelData;
-    let dockId = this.context.getDockId();
-    if (parent?.mode === 'float') {
-      this._movingX = x;
-      this._movingY = y;
-      // hide the panel, but not create drag layer element
-      event.setData({panel: panelData, tabGroup: panelData.group}, dockId);
-      event.startDrag(null, null);
-      this.onFloatPointerDown();
-    } else {
-      let tabGroup = this.context.getGroup(panelData.group);
-      let [panelWidth, panelHeight] = getFloatPanelSize(this._ref, tabGroup);
-
-      event.setData({panel: panelData, panelSize: [panelWidth, panelHeight], tabGroup: panelData.group}, dockId);
-      event.startDrag(null);
-    }
-    this.setState({draggingHeader: true});
-  };
-  onPanelHeaderDragMove = (e: DragState) => {
-    let {panelData} = this.props;
-    if (panelData.parent?.mode !== 'float') {
-      return;
-    }
-    let {width, height} = this.context.getLayoutSize();
-    panelData.x = this._movingX + e.dx;
-    panelData.y = this._movingY + e.dy;
-    if (width > 200 && height > 200) {
-      if (panelData.y < 0) {
-        panelData.y = 0;
-      } else if (panelData.y > height - 16) {
-        panelData.y = height - 16;
-      }
-
-      if (panelData.x + panelData.w < 16) {
-        panelData.x = 16 - panelData.w;
-      } else if (panelData.x > width - 16) {
-        panelData.x = width - 16;
-      }
-    }
-    this.forceUpdate();
-  };
-  onPanelHeaderDragEnd = (e: DragState) => {
-    this.setState({draggingHeader: false});
-    if (e.dropped === false) {
-      let {panelData} = this.props;
-      if (panelData.parent?.mode === 'float') {
-        // in float mode, the position change needs to be sent to the layout
-        this.context.onSilentChange(this.props.panelData.activeId, 'move');
-      }
-    }
-  };
-
-
-  _movingW: number;
-  _movingH: number;
-  _movingCorner: string;
-  onPanelCornerDragT = (e: DragState) => {
-    this.onPanelCornerDrag(e, 't');
-  };
-  onPanelCornerDragB = (e: DragState) => {
-    this.onPanelCornerDrag(e, 'b');
-  };
-  onPanelCornerDragL = (e: DragState) => {
-    this.onPanelCornerDrag(e, 'l');
-  };
-  onPanelCornerDragR = (e: DragState) => {
-    this.onPanelCornerDrag(e, 'r');
-  };
-  onPanelCornerDragTL = (e: DragState) => {
-    this.onPanelCornerDrag(e, 'tl');
-  };
-  onPanelCornerDragTR = (e: DragState) => {
-    this.onPanelCornerDrag(e, 'tr');
-  };
-  onPanelCornerDragBL = (e: DragState) => {
-    this.onPanelCornerDrag(e, 'bl');
-  };
-  onPanelCornerDragBR = (e: DragState) => {
-    this.onPanelCornerDrag(e, 'br');
-  };
-
-  onPanelCornerDrag(e: DragState, corner: string) {
-    let {parent, x, y, w, h} = this.props.panelData;
-    if (parent?.mode === 'float') {
-      this._movingCorner = corner;
-      this._movingX = x;
-      this._movingY = y;
-      this._movingW = w;
-      this._movingH = h;
-      e.startDrag(null, null);
-    }
-  }
-
-  onPanelCornerDragMove = (e: DragState) => {
-    let {panelData} = this.props;
-    let {dx, dy} = e;
-
-    if (this._movingCorner.startsWith('t')) {
-      // when moving top corners, dont let it move header out of screen
-      let {width, height} = this.context.getLayoutSize();
-      if (this._movingY + dy < 0) {
-        dy = -this._movingY;
-      } else if (this._movingY + dy > height - 16) {
-        dy = height - 16 - this._movingY;
-      }
-    }
-
-    switch (this._movingCorner) {
-      case 't': {
-        panelData.y = this._movingY + dy;
-        panelData.h = this._movingH - dy;
-        break;
-      }
-      case 'b': {
-        panelData.h = this._movingH + dy;
-        break;
-      }
-      case 'l': {
-        panelData.x = this._movingX + dx;
-        panelData.w = this._movingW - dx;
-        break;
-      }
-      case 'r': {
-        panelData.w = this._movingW + dx;
-        break;
-      }
-      case 'tl': {
-        panelData.x = this._movingX + dx;
-        panelData.w = this._movingW - dx;
-        panelData.y = this._movingY + dy;
-        panelData.h = this._movingH - dy;
-        break;
-      }
-      case 'tr': {
-        panelData.w = this._movingW + dx;
-        panelData.y = this._movingY + dy;
-        panelData.h = this._movingH - dy;
-        break;
-      }
-      case 'bl': {
-        panelData.x = this._movingX + dx;
-        panelData.w = this._movingW - dx;
-        panelData.h = this._movingH + dy;
-        break;
-      }
-      case 'br': {
-        panelData.w = this._movingW + dx;
-        panelData.h = this._movingH + dy;
-        break;
-      }
-    }
-    panelData.w = Math.max(panelData.w || 0, panelData.minWidth || 0);
-    panelData.h = Math.max(panelData.h || 0, panelData.minHeight || 0);
-
-    //panelData.w = Math.max(Math.min(panelData.w || 0, panelData.maxWidth || Number.MAX_VALUE), panelData.minWidth || 0);
-    //panelData.h = Math.max(Math.min(panelData.h || 0, panelData.maxHeight || Number.MAX_VALUE), panelData.minHeight || 0);
-
-    this.forceUpdate();
-  };
-  onPanelCornerDragEnd = (e: DragState) => {
-    this.context.onSilentChange(this.props.panelData.activeId, 'move');
-  };
-
   onFloatPointerDown = () => {
     let {panelData} = this.props;
     let {z} = panelData;
@@ -258,7 +90,7 @@ export class DockPanel extends React.PureComponent<Props, State> {
   onPanelClicked = (e: React.MouseEvent) => {
     const target = e.nativeEvent.target;
     if (!this._ref.contains(this._ref.ownerDocument.activeElement) && target instanceof Node && this._ref.contains(target)) {
-      (this._ref.querySelector('.dock-bar') as HTMLElement).focus();
+      (this._ref.querySelector('.dock-bar') as HTMLElement)?.focus();
     }
   };
 
@@ -287,11 +119,11 @@ export class DockPanel extends React.PureComponent<Props, State> {
     let isHBox = parent?.mode === 'horizontal';
     let isVBox = parent?.mode === 'vertical';
 
-    let onPanelHeaderDragStart = this.onPanelHeaderDragStart;
+    //let onPanelHeaderDragStart = this.onPanelHeaderDragStart;
 
     if (isMax) {
       dropFromPanel = null;
-      onPanelHeaderDragStart = null;
+      //onPanelHeaderDragStart = null;
     }
     let cls = `dock-panel ${panelClass ? panelClass : ''}${dropFromPanel ? ' dock-panel-dropping' : ''}${draggingHeader ? ' dragging' : ''
       }`;
@@ -328,38 +160,13 @@ export class DockPanel extends React.PureComponent<Props, State> {
 
     return (
       <DragDropDiv getRef={this.getRef} className={cls} style={style} data-dockid={id}
-        onDragOverT={isFloat ? null : this.onDragOver} onClick={this.onPanelClicked}>
-        <DockTabs panelData={panelData} onPanelDragStart={onPanelHeaderDragStart}
-          onPanelDragMove={this.onPanelHeaderDragMove} onPanelDragEnd={this.onPanelHeaderDragEnd} />
-        {isFloat ?
-          [
-            <DragDropDiv key="drag-size-t" className="dock-panel-drag-size dock-panel-drag-size-t"
-              onDragStartT={this.onPanelCornerDragT} onDragMoveT={this.onPanelCornerDragMove}
-              onDragEndT={this.onPanelCornerDragEnd} />,
-            <DragDropDiv key="drag-size-b" className="dock-panel-drag-size dock-panel-drag-size-b"
-              onDragStartT={this.onPanelCornerDragB} onDragMoveT={this.onPanelCornerDragMove}
-              onDragEndT={this.onPanelCornerDragEnd} />,
-            <DragDropDiv key="drag-size-l" className="dock-panel-drag-size dock-panel-drag-size-l"
-              onDragStartT={this.onPanelCornerDragL} onDragMoveT={this.onPanelCornerDragMove}
-              onDragEndT={this.onPanelCornerDragEnd} />,
-            <DragDropDiv key="drag-size-r" className="dock-panel-drag-size dock-panel-drag-size-r"
-              onDragStartT={this.onPanelCornerDragR} onDragMoveT={this.onPanelCornerDragMove}
-              onDragEndT={this.onPanelCornerDragEnd} />,
-            <DragDropDiv key="drag-size-t-l" className="dock-panel-drag-size dock-panel-drag-size-t-l"
-              onDragStartT={this.onPanelCornerDragTL} onDragMoveT={this.onPanelCornerDragMove}
-              onDragEndT={this.onPanelCornerDragEnd} />,
-            <DragDropDiv key="drag-size-t-r" className="dock-panel-drag-size dock-panel-drag-size-t-r"
-              onDragStartT={this.onPanelCornerDragTR} onDragMoveT={this.onPanelCornerDragMove}
-              onDragEndT={this.onPanelCornerDragEnd} />,
-            <DragDropDiv key="drag-size-b-l" className="dock-panel-drag-size dock-panel-drag-size-b-l"
-              onDragStartT={this.onPanelCornerDragBL} onDragMoveT={this.onPanelCornerDragMove}
-              onDragEndT={this.onPanelCornerDragEnd} />,
-            <DragDropDiv key="drag-size-b-r" className="dock-panel-drag-size dock-panel-drag-size-b-r"
-              onDragStartT={this.onPanelCornerDragBR} onDragMoveT={this.onPanelCornerDragMove}
-              onDragEndT={this.onPanelCornerDragEnd} />
-          ]
-          : null
-        }
+        onDragOverT={this.onDragOver} onClick={this.onPanelClicked}>
+        <DockTabs
+          panelData={panelData}
+          setDragging={draggingHeader => this.setState({draggingHeader})}
+          onUpdate={() => this.forceUpdate()}
+        />
+        {isFloat && <FloatResizer data={this.props.panelData} onUpdate={() => this.forceUpdate()} />}
         {droppingLayer}
       </DragDropDiv>
     );

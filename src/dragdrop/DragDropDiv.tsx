@@ -341,7 +341,7 @@ export class DragDropDiv extends React.PureComponent<DragDropDivProps, any> {
 
     return (
       <div ref={this._getRef} className={className} {...others} onMouseDown={onMouseDown}
-           onTouchStart={onTouchDown}>
+        onTouchStart={onTouchDown}>
         {children}
       </div>
     );

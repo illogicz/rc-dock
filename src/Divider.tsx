@@ -5,8 +5,8 @@ import {DragState} from "./dragdrop/DragManager";
 
 export interface DividerChild {
   size: number;
-  minSize: number;
-  maxSize: number;
+  minSize?: number;
+  maxSize?: number;
 }
 
 export interface DividerData {
@@ -48,14 +48,14 @@ class BoxDataCache implements DividerData {
       if (child.minSize > 0) {
         this.beforeMinSize += child.minSize;
       }
-      this.beforeMaxSize += child.maxSize;
+      this.beforeMaxSize += child.maxSize ?? Number.POSITIVE_INFINITY;
     }
     for (let child of this.afterDivider) {
       this.afterSize += child.size;
       if (child.minSize > 0) {
         this.afterMinSize += child.minSize;
       }
-      this.afterMaxSize += child.maxSize
+      this.afterMaxSize += child.maxSize ?? Number.POSITIVE_INFINITY
     }
 
   }
@@ -70,8 +70,8 @@ class BoxDataCache implements DividerData {
 
 }
 
-const shrinkable = (child: DividerChild) => child.size > child.minSize;
-const growable = (child: DividerChild) => child.size < child.maxSize;
+const shrinkable = (child: DividerChild) => child.size > (child.minSize ?? 1);
+const growable = (child: DividerChild) => !child.maxSize || (child.size < child.maxSize);
 
 
 // split size among children
@@ -100,7 +100,7 @@ function spiltSize(newSize: number, oldSize: number, children: DividerChild[]): 
     }
     for (let i of indexes) { //let i = 0; i < children.length; ++i) {
       let size = children[i].size * ratio;
-      if (size > children[i].maxSize) {
+      if (children[i].maxSize && (size > children[i].maxSize)) {
         size = children[i].maxSize;
       }
       if (size < children[i].minSize) {
@@ -133,7 +133,7 @@ export class Divider extends React.PureComponent<DividerProps, any> {
       console.log(box.afterDivider[0]);
       const before = findLastIndex(box.beforeDivider, d > 0 ? growable : shrinkable);
       console.log(before, after);
-      if (before < 0 || after < 0) return;
+      if (before < 0 && after < 0) return;
       box = box.getRange(before, after);
     }
 

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { DockContext, DropDirection, PanelData, TabData } from "./DockData";
 import * as DragManager from "./dragdrop/DragManager";
+import { DockTabBar, DockTabBarProps } from "./DockTabBar";
 import { RenderTabBar } from "rc-tabs/lib/interface";
 export declare class TabCache {
     _ref: HTMLDivElement;
@@ -21,11 +22,11 @@ export declare class TabCache {
     render(): React.ReactElement;
     destroy(): void;
 }
+export declare type RenderDockTabBar = (props: DockTabBarProps, DefaultTabBar: typeof DockTabBar) => React.ReactElement;
 interface Props {
     panelData: PanelData;
-    onPanelDragStart: DragManager.DragHandler;
-    onPanelDragMove: DragManager.DragHandler;
-    onPanelDragEnd: DragManager.DragHandler;
+    onUpdate: () => void;
+    setDragging: (dragging: boolean) => void;
 }
 export declare class DockTabs extends React.PureComponent<Props> {
     static contextType: React.Context<DockContext>;

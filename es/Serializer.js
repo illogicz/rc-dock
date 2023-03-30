@@ -1,4 +1,5 @@
 import { maximePlaceHolderId } from "./DockData";
+import { floatData } from "./Utils";
 function addPanelToCache(panelData, cache) {
     cache.panels.set(panelData.id, panelData);
     for (let tab of panelData.tabs) {
@@ -50,14 +51,7 @@ export function saveLayoutData(layout, saveTab, afterPanelSaved) {
             }
         }
         let { id, size, activeId, dropMode, group } = panelData;
-        let savedPanel;
-        if (panelData.parent.mode === 'float' || panelData.parent.mode === 'window') {
-            let { x, y, z, w, h } = panelData;
-            savedPanel = { id, size, tabs, group, dropMode, activeId, x, y, z, w, h };
-        }
-        else {
-            savedPanel = { id, size, tabs, group, dropMode, activeId };
-        }
+        let savedPanel = Object.assign({ id, size, tabs, group, dropMode, activeId }, floatData(panelData));
         if (afterPanelSaved) {
             afterPanelSaved(savedPanel, panelData);
         }
@@ -74,7 +68,7 @@ export function saveLayoutData(layout, saveTab, afterPanelSaved) {
             }
         }
         let { id, size, mode } = boxData;
-        return { id, size, mode, children };
+        return Object.assign({ id, size, mode, children }, floatData(boxData));
     }
     return {
         dockbox: saveBoxData(layout.dockbox),
@@ -136,8 +130,8 @@ export function loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLo
                 children.push(loadBoxData(child));
             }
         }
-        let { id, size, mode } = savedBox;
-        return { id, size, mode, children };
+        let { id, size, mode, w, h, x, y, z } = savedBox;
+        return { id, size, mode, children, w, h, x, y, z };
     }
     return {
         dockbox: loadBoxData(savedLayout.dockbox),

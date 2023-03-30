@@ -2,6 +2,7 @@ import * as React from "react";
 import {BoxData, DockContext, DockContextType} from "./DockData";
 import {Divider, DividerChild} from "./Divider";
 import {DockPanel} from "./DockPanel";
+import {FloatResizer} from "./FloatDrag";
 
 interface Props {
   size: number;
@@ -24,7 +25,7 @@ export class DockBox extends React.PureComponent<Props, any> {
     }
     let {children, mode} = this.props.boxData;
     let nodes = this._ref.childNodes;
-    if (nodes.length !== children.length * 2 - 1) {
+    if (nodes.length < children.length * 2 - 1) {
       return;
     }
     let dividerChildren: DividerChild[] = [];
@@ -59,7 +60,7 @@ export class DockBox extends React.PureComponent<Props, any> {
 
   render(): React.ReactNode {
     let {boxData} = this.props;
-    let {minWidth, minHeight, maxWidth, maxHeight, size, children, mode, id, widthFlex, heightFlex} = boxData;
+    let {minWidth, minHeight, maxWidth, maxHeight, size, children, mode, id, widthFlex, heightFlex, parent} = boxData;
     let isVertical = mode === 'vertical';
     let childrenRender: React.ReactNode[] = [];
     for (let i = 0; i < children.length; ++i) {
@@ -91,16 +92,32 @@ export class DockBox extends React.PureComponent<Props, any> {
         flex = heightFlex;
       }
     }
+
     let flexGrow = flex * size;
     let flexShrink = flex * 1000000;
     if (flexShrink < 1) {
       flexShrink = 1;
     }
-    console.log("render box", maxWidth, maxHeight)
+    const style: React.CSSProperties = {minWidth, minHeight, maxWidth, maxHeight, flex: `${flexGrow} ${flexShrink} ${size}px`}
+    const isFloat = parent?.mode === "float";
+    if (isFloat) {
+      style.left = boxData.x;
+      style.top = boxData.y;
+      style.width = boxData.w;
+      style.height = boxData.h;
+      style.zIndex = boxData.z;
+      style.position = "absolute";
+      cls += " dock-box-float";
+      childrenRender.unshift()
+    }
+
     return (
-      <div ref={this.getRef} className={cls} data-dockid={id}
-        style={{minWidth, minHeight, maxWidth, maxHeight, flex: `${flexGrow} ${flexShrink} ${size}px`}}>
+      <div ref={this.getRef} className={cls} data-dockid={id} style={style}>
         {childrenRender}
+        {isFloat && <FloatResizer
+          data={this.props.boxData}
+          onUpdate={() => this.forceUpdate()}
+        />}
       </div>
     );
   }

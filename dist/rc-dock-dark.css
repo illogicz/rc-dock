@@ -37,6 +37,97 @@ body > .dragging-layer > div:last-child {
 .drag-accept-reject::after {
   content: "🚫";
 }
+.dock-fbox {
+  pointer-events: none;
+  z-index: 200;
+}
+.dock-fbox > .dock-panel,
+.dock-fbox > .dock-box {
+  position: absolute;
+  pointer-events: visible;
+  box-shadow: 0 0 4px #444;
+}
+.dock-fbox > .dock-panel.dragging {
+  opacity: 0.8;
+  pointer-events: none;
+}
+.dock-box-float {
+  background: #000;
+}
+.dock-panel.dragging,
+.dock-box.dragging {
+  opacity: 0.3;
+}
+.dock-panel-drag-size,
+.dock-box-drag-size {
+  position: absolute;
+  z-index: 300;
+}
+.dock-panel-drag-size-t,
+.dock-box-drag-size-t {
+  top: -4px;
+  left: 4px;
+  right: 4px;
+  height: 8px;
+  cursor: ns-resize;
+}
+.dock-panel-drag-size-b,
+.dock-box-drag-size-b {
+  bottom: -4px;
+  left: 4px;
+  right: 4px;
+  height: 8px;
+  cursor: ns-resize;
+}
+.dock-panel-drag-size-l,
+.dock-box-drag-size-l {
+  left: -4px;
+  top: 4px;
+  bottom: 4px;
+  width: 8px;
+  cursor: ew-resize;
+}
+.dock-panel-drag-size-r,
+.dock-box-drag-size-r {
+  right: -4px;
+  top: 4px;
+  bottom: 4px;
+  width: 8px;
+  cursor: ew-resize;
+}
+.dock-panel-drag-size-t-l,
+.dock-box-drag-size-t-l {
+  top: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  cursor: nwse-resize;
+}
+.dock-panel-drag-size-t-r,
+.dock-box-drag-size-t-r {
+  top: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  cursor: nesw-resize;
+}
+.dock-panel-drag-size-b-l,
+.dock-box-drag-size-b-l {
+  bottom: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  cursor: nesw-resize;
+}
+.dock-panel-drag-size-b-r,
+.dock-box-drag-size-b-r {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17' viewBox='0 0 17 17'%3E%3Cpath fill='rgba(255, 255, 255, 0.15)' d='M2 12 L12 2 L12 12z'/%3E%3C/svg%3E");
+  bottom: -4px;
+  right: -4px;
+  width: 17px;
+  height: 17px;
+  cursor: nwse-resize;
+}
 .dock {
   box-sizing: border-box;
   width: 100%;
@@ -346,70 +437,6 @@ body.dock-dragging iframe {
   background: #141414;
   border: 1px solid #434343;
 }
-.dock-panel.dragging {
-  opacity: 0.3;
-}
-.dock-panel-drag-size {
-  position: absolute;
-  z-index: 300;
-}
-.dock-panel-drag-size-t {
-  top: -4px;
-  left: 4px;
-  right: 4px;
-  height: 8px;
-  cursor: ns-resize;
-}
-.dock-panel-drag-size-b {
-  bottom: -4px;
-  left: 4px;
-  right: 4px;
-  height: 8px;
-  cursor: ns-resize;
-}
-.dock-panel-drag-size-l {
-  left: -4px;
-  top: 4px;
-  bottom: 4px;
-  width: 8px;
-  cursor: ew-resize;
-}
-.dock-panel-drag-size-r {
-  right: -4px;
-  top: 4px;
-  bottom: 4px;
-  width: 8px;
-  cursor: ew-resize;
-}
-.dock-panel-drag-size-t-l {
-  top: -4px;
-  left: -4px;
-  width: 8px;
-  height: 8px;
-  cursor: nwse-resize;
-}
-.dock-panel-drag-size-t-r {
-  top: -4px;
-  right: -4px;
-  width: 8px;
-  height: 8px;
-  cursor: nesw-resize;
-}
-.dock-panel-drag-size-b-l {
-  bottom: -4px;
-  left: -4px;
-  width: 8px;
-  height: 8px;
-  cursor: nesw-resize;
-}
-.dock-panel-drag-size-b-r {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17' viewBox='0 0 17 17'%3E%3Cpath fill='rgba(255, 255, 255, 0.15)' d='M2 12 L12 2 L12 12z'/%3E%3C/svg%3E");
-  bottom: -4px;
-  right: -4px;
-  width: 17px;
-  height: 17px;
-  cursor: nwse-resize;
-}
 .dock-box {
   box-sizing: border-box;
   display: flex;
@@ -439,19 +466,6 @@ body.dock-dragging iframe {
 .dock-vbox > .dock-divider {
   transform: scaleY(3);
   cursor: ns-resize;
-}
-.dock-fbox {
-  pointer-events: none;
-  z-index: 200;
-}
-.dock-fbox > .dock-panel {
-  position: absolute;
-  pointer-events: visible;
-  box-shadow: 0 0 4px #444;
-}
-.dock-fbox > .dock-panel.dragging {
-  opacity: 0.8;
-  pointer-events: none;
 }
 .dock-mbox {
   z-index: 250;
@@ -527,19 +541,16 @@ body.dock-dragging iframe {
   transition: all 0.1s ease-out;
 }
 .dock-drop-edge {
-    position: absolute;
-    top: 30px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 100;
-    background: white;
-    border: none;
-    opacity: 0.01;
-/*
-    border: 2px solid red;
-    opacity: 1;
-*/}
+  position: absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  background: white;
+  border: none;
+  opacity: 0.01;
+}
 .dock-drop-layer {
   position: absolute;
   pointer-events: none;

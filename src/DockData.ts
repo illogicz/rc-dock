@@ -1,5 +1,6 @@
 import * as React from "react";
 import {Filter} from "./Algorithm";
+import {RenderDockTabBar} from "./DockTabs";
 
 export interface TabGroup {
   /**
@@ -78,6 +79,8 @@ export interface TabGroup {
    */
   moreIcon?: React.ReactNode;
 
+  renderTabBar?: RenderDockTabBar;
+
 }
 
 /** @ignore */
@@ -112,7 +115,7 @@ export interface TabBase {
   id?: string;
 }
 
-export interface PanelBase {
+export interface PanelBase extends FloatBase {
   /**
    * id will be auto generated if it's undefined
    */
@@ -134,6 +137,14 @@ export interface PanelBase {
    */
   group?: string;
 
+  /**
+   * Limit Drop modes
+   */
+  dropMode?: DropMode;
+}
+
+
+export interface FloatBase {
   /** float mode only */
   x?: number;
   /** float mode only */
@@ -144,11 +155,9 @@ export interface PanelBase {
   w?: number;
   /** float mode only */
   h?: number;
-
-  dropMode?: DropMode;
 }
 
-export interface BoxBase {
+export interface BoxBase extends FloatBase {
   /**
    * id will be auto generated if it's undefined
    */
@@ -170,7 +179,7 @@ export interface LayoutBase {
   maxbox?: BoxBase;
 }
 
-interface BoxChild extends DockDataBase {
+export interface BoxChild extends DockDataBase {
   parent?: BoxData;
   widthFlex?: number;
   heightFlex?: number;
@@ -258,6 +267,7 @@ export interface PanelData extends PanelBase, BoxChild {
    */
   panelLock?: PanelLock; // if not null, panel won't disappear even when all children are gone
 
+  renderTabBar?: RenderDockTabBar
 
 }
 
@@ -276,7 +286,6 @@ export interface LayoutData extends LayoutBase {
   dockbox: BoxData;
   /**
    * float box,
-   * Children must be PanelData, child box is not allowed
    */
   floatbox?: BoxData;
 

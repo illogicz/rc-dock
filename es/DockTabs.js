@@ -172,14 +172,14 @@ export class DockTabs extends React.PureComponent {
             this.context.dockMove(panelData, null, 'new-window');
         };
         this.renderTabBar = (props, TabNavList) => {
-            let { panelData, onPanelDragStart, onPanelDragMove, onPanelDragEnd } = this.props;
+            var _a;
+            let { panelData, setDragging } = this.props;
             let { group: groupName, panelLock } = panelData;
             let group = this.context.getGroup(groupName);
-            let { panelExtra } = group;
+            let { panelExtra, renderTabBar } = group;
             //props.
             let maximizable = group.maximizable;
             if (panelData.parent.mode === 'window') {
-                onPanelDragStart = null;
                 maximizable = false;
             }
             if (panelLock) {
@@ -198,7 +198,13 @@ export class DockTabs extends React.PureComponent {
                     panelExtraContent = this.addNewWindowMenu(panelExtraContent, !maximizable);
                 }
             }
-            return (React.createElement(DockTabBar, Object.assign({ onDragStart: onPanelDragStart, onDragMove: onPanelDragMove, onDragEnd: onPanelDragEnd, TabNavList: TabNavList, isMaximized: panelData.parent.mode === 'maximize' }, props, { extra: panelExtraContent })));
+            const barProps = Object.assign(Object.assign({ onUpdate: this.props.onUpdate, setDragging, data: panelData, TabNavList: TabNavList, isMaximized: panelData.parent.mode === 'maximize' }, props), { extra: panelExtraContent });
+            return (_a = renderTabBar === null || renderTabBar === void 0 ? void 0 : renderTabBar(barProps, DockTabBar)) !== null && _a !== void 0 ? _a : React.createElement(DockTabBar, Object.assign({}, barProps));
+            // return (
+            //   <DockTabBar onDragStart={onPanelDragStart} onDragMove={onPanelDragMove} onDragEnd={onPanelDragEnd}
+            //     TabNavList={TabNavList} isMaximized={panelData.parent.mode === 'maximize'} {...props}
+            //     extra={panelExtraContent} />
+            // );
         };
         this.onTabChange = (activeId) => {
             this.props.panelData.activeId = activeId;
