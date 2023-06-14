@@ -1,14 +1,13 @@
-import * as React from "react";
-import {DockContext, DockContextType, PanelData, TabData} from "./DockData";
-import {DockTabs} from "./DockTabs";
-import {DragDropDiv} from "./dragdrop/DragDropDiv";
-import {DragState} from "./dragdrop/DragManager";
-import {DockDropLayer} from "./DockDropLayer";
-import {getFloatPanelSize, nextZIndex} from "./Algorithm";
-import {DockDropEdge} from "./DockDropEdge";
-import {groupClassNames} from "./Utils";
 import classNames from "classnames";
-import {FloatResizer} from "./FloatDrag";
+import * as React from "react";
+import {BoxData, DockContext, DockContextType, PanelData, TabData} from "./DockData";
+import {DockDropEdge} from "./DockDropEdge";
+import {DockDropLayer} from "./DockDropLayer";
+import {DockTabs} from "./DockTabs";
+import {groupClassNames, isPanel} from "./Utils";
+import {DragDropContainer} from "./dragdrop/DragDropContainer";
+import {DragState} from "./dragdrop/DragManager";
+import {getFloatPanelSize} from "./Algorithm";
 
 interface Props {
   panelData: PanelData;
@@ -16,7 +15,7 @@ interface Props {
 }
 
 interface State {
-  dropFromPanel: PanelData;
+  dropFrom: PanelData | BoxData;
   draggingHeader: boolean;
 }
 
@@ -26,15 +25,7 @@ export class DockPanel extends React.PureComponent<Props, State> {
   context!: DockContext;
 
   _ref: HTMLDivElement;
-  getRef = (r: HTMLDivElement) => {
-    this._ref = r;
-    if (r) {
-      let {parent} = this.props.panelData;
-      if ((parent?.mode === 'float')) {
-        r.addEventListener('pointerdown', this.onFloatPointerDown, {capture: true, passive: true});
-      }
-    }
-  };
+  getRef = (r: HTMLDivElement) => this._ref = r;
 
   static _droppingPanel: DockPanel;
   static set droppingPanel(panel: DockPanel) {
@@ -47,45 +38,38 @@ export class DockPanel extends React.PureComponent<Props, State> {
     DockPanel._droppingPanel = panel;
   }
 
-  state: State = {dropFromPanel: null, draggingHeader: false};
+  state: State = {dropFrom: null, draggingHeader: false};
 
   onDragOver = (e: DragState) => {
+    let dockId = this.context.getDockId();
     if (DockPanel._droppingPanel === this) {
       return;
     }
-    let dockId = this.context.getDockId();
     let tab: TabData = DragState.getData('tab', dockId);
     let panel: PanelData = DragState.getData('panel', dockId);
-    if (tab || panel) {
+    let box: BoxData = DragState.getData('box', dockId);
+    if (tab || panel || box) {
       DockPanel.droppingPanel = this;
     }
     if (tab) {
       if (tab.parent) {
-        this.setState({dropFromPanel: tab.parent});
+        this.setState({dropFrom: tab.parent});
       } else {
         // add a fake panel
-        this.setState({dropFromPanel: {activeId: '', tabs: [], group: tab.group}});
+        this.setState({dropFrom: {activeId: '', tabs: [], group: tab.group}});
       }
     } else if (panel) {
-      this.setState({dropFromPanel: panel});
+      this.setState({dropFrom: panel});
+    } else if (box) {
+      this.setState({dropFrom: box});
     }
   };
 
   onDragOverOtherPanel() {
-    if (this.state.dropFromPanel) {
-      this.setState({dropFromPanel: null});
+    if (this.state.dropFrom) {
+      this.setState({dropFrom: null});
     }
   }
-
-  onFloatPointerDown = () => {
-    let {panelData} = this.props;
-    let {z} = panelData;
-    let newZ = nextZIndex(z);
-    if (newZ !== z) {
-      panelData.z = newZ;
-      this.forceUpdate();
-    }
-  };
 
   onPanelClicked = (e: React.MouseEvent) => {
     const target = e.nativeEvent.target;
@@ -94,93 +78,67 @@ export class DockPanel extends React.PureComponent<Props, State> {
     }
   };
 
+
   render(): React.ReactNode {
-    let {dropFromPanel, draggingHeader} = this.state;
+    let {dropFrom, draggingHeader} = this.state;
     let {panelData, size} = this.props;
-    let {minWidth, minHeight, maxWidth, maxHeight, group, id, parent, panelLock} = panelData;
+    let {group, parent, panelLock} = panelData;
     let styleName = group;
     let tabGroup = this.context.getGroup(group);
-    let {widthFlex, heightFlex} = tabGroup;
-    if (panelLock) {
-      let {panelStyle, widthFlex: panelWidthFlex, heightFlex: panelHeightFlex} = panelLock;
-      if (panelStyle) {
-        styleName = panelStyle;
-      }
-      if (typeof panelWidthFlex === 'number') {
-        widthFlex = panelWidthFlex;
-      }
-      if (typeof panelHeightFlex === 'number') {
-        heightFlex = panelHeightFlex;
-      }
-    }
-    let panelClass: string = classNames(groupClassNames(styleName))
+
+    let panelClass = classNames(
+      groupClassNames(styleName)
+    );
     let isMax = parent?.mode === 'maximize';
-    let isFloat = parent?.mode === 'float';
     let isHBox = parent?.mode === 'horizontal';
     let isVBox = parent?.mode === 'vertical';
 
-    //let onPanelHeaderDragStart = this.onPanelHeaderDragStart;
+    const flex =
+      (isHBox && (panelLock?.widthFlex ?? tabGroup.widthFlex)) ||
+      (isVBox && (panelLock?.heightFlex ?? tabGroup.heightFlex)) || 1
 
     if (isMax) {
-      dropFromPanel = null;
-      //onPanelHeaderDragStart = null;
+      dropFrom = null;
     }
-    let cls = `dock-panel ${panelClass ? panelClass : ''}${dropFromPanel ? ' dock-panel-dropping' : ''}${draggingHeader ? ' dragging' : ''
-      }`;
-    let flex = 1;
-    if (isHBox && widthFlex != null) {
-      flex = widthFlex;
-    } else if (isVBox && heightFlex != null) {
-      flex = heightFlex;
-    }
-    let flexGrow = flex * size;
-    let flexShrink = flex * 1000000;
-    if (flexShrink < 1) {
-      flexShrink = 1;
-    }
+    let cls = `dock-panel ${panelClass || ''}${dropFrom ? ' dock-panel-dropping' : ''}`
 
-    let style: React.CSSProperties = {minWidth, minHeight, maxWidth: maxWidth || "", maxHeight: maxHeight || "", flex: `${flexGrow} ${flexShrink} ${size}px`};
-    if (isFloat) {
-      style.left = panelData.x;
-      style.top = panelData.y;
-      style.width = panelData.w;
-      style.height = panelData.h;
-      style.zIndex = panelData.z;
-    }
     let droppingLayer: React.ReactNode;
-    if (dropFromPanel && panelData.dropMode?.length !== 0) {
-      let dropFromGroup = this.context.getGroup(dropFromPanel.group);
+    if (dropFrom && panelData.dropMode?.length !== 0) {
+      let dropFromGroup = isPanel(dropFrom) ? this.context.getGroup(dropFrom.group) : null;
       let dockId = this.context.getDockId();
-      if (!dropFromGroup.tabLocked || DragState.getData('tab', dockId) == null) {
+      if (!dropFromGroup?.tabLocked || DragState.getData('tab', dockId) == null) {
         // not allowed locked tab to create new panel
-        let DockDropClass = this.context.useEdgeDrop() ? DockDropEdge : DockDropLayer;
-        droppingLayer = <DockDropClass panelData={panelData} panelElement={this._ref} dropFromPanel={dropFromPanel} />;
+        //let DockDropClass = this.context.useEdgeDrop() ? DockDropEdge : DockDropLayer;
+        droppingLayer = <DockDropEdge data={panelData} panelElement={this._ref} dropFrom={dropFrom} />;
       }
     }
 
+    console.log({droppingLayer, dropFrom});
+
     return (
-      <DragDropDiv getRef={this.getRef} className={cls} style={style} data-dockid={id}
-        onDragOverT={this.onDragOver} onClick={this.onPanelClicked}>
-        <DockTabs
-          panelData={panelData}
-          setDragging={draggingHeader => this.setState({draggingHeader})}
-          onUpdate={() => this.forceUpdate()}
+      <DragDropContainer
+        getRef={this.getRef}
+        className={cls}
+        flex={flex}
+        size={size}
+        dragging={draggingHeader}
+        onDragOverT={this.onDragOver}
+        onClick={this.onPanelClicked}
+        data={panelData}
+      >
+        <DockTabs panelData={panelData}
+          onDragMoveT={() => this.forceUpdate()}
+          onDragStartT={() => this.setState({draggingHeader: true})}
+          onDragEndT={() => this.setState({draggingHeader: false})}
         />
-        {isFloat && <FloatResizer data={this.props.panelData} onUpdate={() => this.forceUpdate()} />}
         {droppingLayer}
-      </DragDropDiv>
+      </DragDropContainer>
     );
   }
-
-  _unmounted = false;
 
   componentWillUnmount(): void {
     if (DockPanel._droppingPanel === this) {
       DockPanel.droppingPanel = null;
     }
-    if (this._ref) {
-      this._ref.removeEventListener('pointerdown', this.onFloatPointerDown, {capture: true});
-    }
-    this._unmounted = true;
   }
 }

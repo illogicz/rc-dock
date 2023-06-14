@@ -4,8 +4,7 @@ import {GestureState} from "./GestureManager";
 
 export type AbstractPointerEvent = MouseEvent | TouchEvent;
 
-interface DragDropDivProps extends React.HTMLAttributes<HTMLDivElement> {
-  getRef?: (ref: HTMLDivElement) => void;
+export interface DragDropHandlers {
   onDragStartT?: DragManager.DragHandler;
   onDragMoveT?: DragManager.DragHandler;
   onDragEndT?: DragManager.DragHandler;
@@ -16,6 +15,10 @@ interface DragDropDivProps extends React.HTMLAttributes<HTMLDivElement> {
    * return false to indicate the drop is canceled
    */
   onDropT?: DragManager.DropHandler;
+}
+
+interface DragDropDivProps extends DragDropHandlers, React.HTMLAttributes<HTMLDivElement> {
+  getRef?: (ref: HTMLDivElement) => void;
   /**
    * by default onDragStartT will be called on first drag move
    * but if directDragT is true, onDragStartT will be called as soon as mouse is down
@@ -145,10 +148,8 @@ export class DragDropDiv extends React.PureComponent<DragDropDivProps, any> {
   }
 
   executeFirstMove(state: DragManager.DragState): boolean {
-    let {onDragStartT} = this.props;
-
     this.waitingMove = false;
-    onDragStartT(state);
+    this.props?.onDragStartT(state);
     if (!DragManager.isDragging()) {
       this.onDragEnd();
       return false;

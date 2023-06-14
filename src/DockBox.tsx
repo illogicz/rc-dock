@@ -2,7 +2,8 @@ import * as React from "react";
 import {BoxData, DockContext, DockContextType} from "./DockData";
 import {Divider, DividerChild} from "./Divider";
 import {DockPanel} from "./DockPanel";
-import {FloatResizer} from "./FloatDrag";
+import {FloatResizer} from "./dragdrop/FloatResizer";
+import {DragDropContainer} from "./dragdrop/DragDropContainer";
 
 interface Props {
   size: number;
@@ -24,16 +25,22 @@ export class DockBox extends React.PureComponent<Props, any> {
       return null;
     }
     let {children, mode} = this.props.boxData;
-    let nodes = this._ref.childNodes;
-    if (nodes.length < children.length * 2 - 1) {
+
+    const nodes = Array.from(this._ref.children).filter(el => el.classList.contains('dock-child'));
+    if (nodes.length !== children.length) {
+      console.warn("children size dont match");
+      debugger;
       return;
     }
+
+
+    //childNodes
     let dividerChildren: DividerChild[] = [];
     for (let i = 0; i < children.length; ++i) {
       if (mode === 'vertical') {
-        dividerChildren.push({size: (nodes[i * 2] as HTMLElement).offsetHeight, minSize: children[i].minHeight, maxSize: children[i].maxHeight});
+        dividerChildren.push({size: (nodes[i] as HTMLElement).offsetHeight, minSize: children[i].minHeight, maxSize: children[i].maxHeight});
       } else {
-        dividerChildren.push({size: (nodes[i * 2] as HTMLElement).offsetWidth, minSize: children[i].minWidth, maxSize: children[i].maxWidth});
+        dividerChildren.push({size: (nodes[i] as HTMLElement).offsetWidth, minSize: children[i].minWidth, maxSize: children[i].maxWidth});
       }
     }
     return {
@@ -43,7 +50,6 @@ export class DockBox extends React.PureComponent<Props, any> {
     };
   };
   changeSizes = (sizes: number[]) => {
-    console.log(sizes);
     let {children} = this.props.boxData;
     if (children.length !== sizes.length) {
       return;
@@ -59,8 +65,8 @@ export class DockBox extends React.PureComponent<Props, any> {
   };
 
   render(): React.ReactNode {
-    let {boxData} = this.props;
-    let {minWidth, minHeight, maxWidth, maxHeight, size, children, mode, id, widthFlex, heightFlex, parent} = boxData;
+    let {boxData, size} = this.props;
+    let {children, mode, id, widthFlex, heightFlex} = boxData;
     let isVertical = mode === 'vertical';
     let childrenRender: React.ReactNode[] = [];
     for (let i = 0; i < children.length; ++i) {
@@ -78,47 +84,20 @@ export class DockBox extends React.PureComponent<Props, any> {
         childrenRender.push(<DockBox size={child.size} boxData={child} key={child.id} />);
       }
     }
-    let cls: string;
-    let flex = 1;
-    if (mode === 'vertical') {
-      cls = 'dock-box dock-vbox';
-      if (widthFlex != null) {
-        flex = widthFlex;
-      }
-    } else {
-      // since special boxes dont reuse this render function, this can only be horizontal box
-      cls = 'dock-box dock-hbox';
-      if (heightFlex != null) {
-        flex = heightFlex;
-      }
-    }
 
-    let flexGrow = flex * size;
-    let flexShrink = flex * 1000000;
-    if (flexShrink < 1) {
-      flexShrink = 1;
-    }
-    const style: React.CSSProperties = {minWidth, minHeight, maxWidth, maxHeight, flex: `${flexGrow} ${flexShrink} ${size}px`}
-    const isFloat = parent?.mode === "float";
-    if (isFloat) {
-      style.left = boxData.x;
-      style.top = boxData.y;
-      style.width = boxData.w;
-      style.height = boxData.h;
-      style.zIndex = boxData.z;
-      style.position = "absolute";
-      cls += " dock-box-float";
-      childrenRender.unshift()
-    }
+    const cls = 'dock-box ' + (isVertical ? 'dock-vbox' : 'dock-hbox');
+    const flex = (isVertical ? heightFlex : widthFlex) ?? 1;
 
     return (
-      <div ref={this.getRef} className={cls} data-dockid={id} style={style}>
+      <DragDropContainer
+        data={boxData}
+        getRef={this.getRef}
+        className={cls}
+        data-dockid={id}
+        flex={flex}
+        size={size}>
         {childrenRender}
-        {isFloat && <FloatResizer
-          data={this.props.boxData}
-          onUpdate={() => this.forceUpdate()}
-        />}
-      </div>
+      </DragDropContainer>
     );
   }
 }

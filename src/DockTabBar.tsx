@@ -1,7 +1,8 @@
 import type {TabNavListProps} from "rc-tabs/lib/TabNavList";
 import * as React from "react";
 import {DockContextType, PanelData} from "./DockData";
-import {FloatHeader} from "./FloatDrag";
+import {DragDropDiv, DragDropHandlers} from "./dragdrop/DragDropDiv";
+import {DragHeader} from "./dragdrop/DragHeader";
 
 /**
  * @return returns true if navigation is handled in local tab move, otherwise returns false
@@ -31,23 +32,21 @@ function checkLocalTabMove(key: string, tabbar: HTMLDivElement): boolean {
 }
 
 
-export interface DockTabBarProps extends TabNavListProps {
-  data: PanelData,
-  onUpdate: () => void;
+export interface DockTabBarProps extends DragDropHandlers {
+  data: PanelData;
   isMaximized: boolean;
-  setDragging: (dragging: boolean) => void;
+  navListProps: TabNavListProps;
   TabNavList: React.ComponentType<TabNavListProps>;
 }
 
 export function DockTabBar(props: DockTabBarProps) {
   const {
-    //onDragStart, onDragMove, onDragEnd, onDragOver, onDrop, 
-    TabNavList, isMaximized, data, onUpdate, setDragging,
-    ...restProps
+    TabNavList, isMaximized, navListProps, ...rest
   } = props;
 
-  const layout = React.useContext(DockContextType);
 
+
+  const layout = React.useContext(DockContextType);
   const ref = React.useRef<HTMLDivElement>();
   const getRef = (div: HTMLDivElement) => {
     ref.current = div;
@@ -63,9 +62,30 @@ export function DockTabBar(props: DockTabBarProps) {
       e.preventDefault();
     }
   };
+
+  // return (
+  //   <DragDropDiv onDragStartT={onDragStartT}
+  //     onDragMoveT={onDragMoveT}
+  //     onDragEndT={onDragEndT}
+  //     role="tablist"
+  //     className="dock-bar"
+  //     onKeyDown={onKeyDown}
+  //     getRef={getRef}
+  //     tabIndex={-1}
+  //   >
+  //     <TabNavList {...navListProps} />
+  //   </DragDropDiv>
+  // );
   return (
-    <FloatHeader data={data} getRef={getRef} setDragging={setDragging} onUpdate={onUpdate} className="dock-bar" role="tablist" onKeyDown={onKeyDown}>
-      <TabNavList {...restProps} />
-    </FloatHeader>
+    <DragHeader
+      {...rest}
+      getRef={getRef}
+      className="dock-bar"
+      role="tablist"
+      onKeyDown={onKeyDown}
+      tabIndex={-1}
+    >
+      <TabNavList {...navListProps} />
+    </DragHeader>
   );
 }

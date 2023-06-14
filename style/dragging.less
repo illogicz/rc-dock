@@ -53,19 +53,28 @@ body > .dragging-layer {
 
   & > .dock-panel, & > .dock-box {
       position: absolute;
-      pointer-events: visible;
+      //pointer-events: visible;
+      pointer-events: all;
       box-shadow: @panel-box-shadow;
   }
 
-  & > .dock-panel.dragging {
+  & > .dragging {
       opacity: 0.8;
       pointer-events: none;
   }
 }
 
+
 .dock-box-float {
   background: @background-color;
   border: 1px solid @panel-border-color;
+}
+
+
+.dock-panel {
+  &.dragging {
+    opacity: 0.3;
+  }
 }
 
 .dock-panel, .dock-box {
@@ -75,9 +84,7 @@ body > .dragging-layer {
   // background: @component-background;
   // border: 1px solid @panel-border-color;
 
-  &.dragging {
-    opacity: 0.3;
-  }
+
 
   &-drag-size {
     position: absolute;

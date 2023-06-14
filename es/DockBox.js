@@ -2,7 +2,7 @@ import * as React from "react";
 import { DockContextType } from "./DockData";
 import { Divider } from "./Divider";
 import { DockPanel } from "./DockPanel";
-import { FloatResizer } from "./FloatDrag";
+import { DragDropContainer } from "./dragdrop/DragDropContainer";
 export class DockBox extends React.PureComponent {
     constructor() {
         super(...arguments);
@@ -14,17 +14,20 @@ export class DockBox extends React.PureComponent {
                 return null;
             }
             let { children, mode } = this.props.boxData;
-            let nodes = this._ref.childNodes;
-            if (nodes.length < children.length * 2 - 1) {
+            const nodes = Array.from(this._ref.children).filter(el => el.classList.contains('dock-child'));
+            if (nodes.length !== children.length) {
+                console.warn("children size dont match");
+                debugger;
                 return;
             }
+            //childNodes
             let dividerChildren = [];
             for (let i = 0; i < children.length; ++i) {
                 if (mode === 'vertical') {
-                    dividerChildren.push({ size: nodes[i * 2].offsetHeight, minSize: children[i].minHeight, maxSize: children[i].maxHeight });
+                    dividerChildren.push({ size: nodes[i].offsetHeight, minSize: children[i].minHeight, maxSize: children[i].maxHeight });
                 }
                 else {
-                    dividerChildren.push({ size: nodes[i * 2].offsetWidth, minSize: children[i].minWidth, maxSize: children[i].maxWidth });
+                    dividerChildren.push({ size: nodes[i].offsetWidth, minSize: children[i].minWidth, maxSize: children[i].maxWidth });
                 }
             }
             return {
@@ -34,7 +37,6 @@ export class DockBox extends React.PureComponent {
             };
         };
         this.changeSizes = (sizes) => {
-            console.log(sizes);
             let { children } = this.props.boxData;
             if (children.length !== sizes.length) {
                 return;
@@ -49,8 +51,9 @@ export class DockBox extends React.PureComponent {
         };
     }
     render() {
-        let { boxData } = this.props;
-        let { minWidth, minHeight, maxWidth, maxHeight, size, children, mode, id, widthFlex, heightFlex, parent } = boxData;
+        var _a;
+        let { boxData, size } = this.props;
+        let { children, mode, id, widthFlex, heightFlex } = boxData;
         let isVertical = mode === 'vertical';
         let childrenRender = [];
         for (let i = 0; i < children.length; ++i) {
@@ -66,41 +69,9 @@ export class DockBox extends React.PureComponent {
                 childrenRender.push(React.createElement(DockBox, { size: child.size, boxData: child, key: child.id }));
             }
         }
-        let cls;
-        let flex = 1;
-        if (mode === 'vertical') {
-            cls = 'dock-box dock-vbox';
-            if (widthFlex != null) {
-                flex = widthFlex;
-            }
-        }
-        else {
-            // since special boxes dont reuse this render function, this can only be horizontal box
-            cls = 'dock-box dock-hbox';
-            if (heightFlex != null) {
-                flex = heightFlex;
-            }
-        }
-        let flexGrow = flex * size;
-        let flexShrink = flex * 1000000;
-        if (flexShrink < 1) {
-            flexShrink = 1;
-        }
-        const style = { minWidth, minHeight, maxWidth, maxHeight, flex: `${flexGrow} ${flexShrink} ${size}px` };
-        const isFloat = (parent === null || parent === void 0 ? void 0 : parent.mode) === "float";
-        if (isFloat) {
-            style.left = boxData.x;
-            style.top = boxData.y;
-            style.width = boxData.w;
-            style.height = boxData.h;
-            style.zIndex = boxData.z;
-            style.position = "absolute";
-            cls += " dock-box-float";
-            childrenRender.unshift();
-        }
-        return (React.createElement("div", { ref: this.getRef, className: cls, "data-dockid": id, style: style },
-            childrenRender,
-            isFloat && React.createElement(FloatResizer, { data: this.props.boxData, onUpdate: () => this.forceUpdate() })));
+        const cls = 'dock-box ' + (isVertical ? 'dock-vbox' : 'dock-hbox');
+        const flex = (_a = (isVertical ? heightFlex : widthFlex)) !== null && _a !== void 0 ? _a : 1;
+        return (React.createElement(DragDropContainer, { data: boxData, getRef: this.getRef, className: cls, "data-dockid": id, flex: flex, size: size }, childrenRender));
     }
 }
 DockBox.contextType = DockContextType;

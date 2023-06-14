@@ -119,7 +119,7 @@ export class Divider extends React.PureComponent<DividerProps, any> {
 
   startDrag = (e: DragState) => {
     this.boxData = new BoxDataCache(this.props.getDividerData(this.props.idx));
-    console.log(this.boxData);
+    //console.log(this.boxData);
     e.startDrag(this.boxData.element, null);
   };
 
@@ -130,16 +130,16 @@ export class Divider extends React.PureComponent<DividerProps, any> {
     let box = this.boxData
     if (!(e.event.shiftKey || e.event.ctrlKey || e.event.altKey)) {
       const after = box.afterDivider.findIndex(d > 0 ? shrinkable : growable);
-      console.log(box.afterDivider[0]);
+      // console.log(box.afterDivider[0]);
       const before = findLastIndex(box.beforeDivider, d > 0 ? growable : shrinkable);
-      console.log(before, after);
+      //console.log(before, after);
       if (before < 0 && after < 0) return;
       box = box.getRange(before, after);
     }
 
     let {beforeSize, beforeMinSize, beforeMaxSize, afterSize, afterMinSize, afterMaxSize, beforeDivider, afterDivider} = box;
 
-    console.log(beforeDivider.length, afterDivider.length);
+    //console.log(beforeDivider.length, afterDivider.length);
 
     const totalSize = beforeSize + afterSize;
     let newBeforeSize = beforeSize + d;

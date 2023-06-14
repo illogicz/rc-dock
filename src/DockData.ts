@@ -360,7 +360,7 @@ export interface DockContext {
    * @param floatPosition position of float panel, used only when direction="float"
    */
   dockMove(
-    source: TabData | PanelData,
+    source: TabData | PanelData | BoxData,
     target: string | TabData | PanelData | BoxData | null,
     direction: DropDirection,
     floatPosition?: {left: number, top: number, width: number, height: number}

@@ -42,7 +42,6 @@ class DockPortalManager extends React.PureComponent {
             }
         };
     }
-    /** @ignore */
     getTabCache(id, owner) {
         let cache = this._caches.get(id);
         if (!cache) {
@@ -56,7 +55,6 @@ class DockPortalManager extends React.PureComponent {
         }
         return cache;
     }
-    /** @ignore */
     removeTabCache(id, owner) {
         let cache = this._caches.get(id);
         if (cache && cache.owner === owner) {
@@ -67,7 +65,6 @@ class DockPortalManager extends React.PureComponent {
             }
         }
     }
-    /** @ignore */
     updateTabCache(id, children) {
         let cache = this._caches.get(id);
         if (cache) {
@@ -186,7 +183,7 @@ export class DockLayout extends DockPortalManager {
         else if (direction === 'front') {
             layout = Algorithm.moveToFront(layout, source);
         }
-        else if (!isBox(source)) {
+        else {
             layout = Algorithm.removeFromLayout(layout, source);
         }
         if (direction === 'float') {
@@ -214,6 +211,12 @@ export class DockLayout extends DockPortalManager {
                 this.find(target, Algorithm.Filter.All) :
                 target = Algorithm.getUpdatedObject(target);
             if (isBox(source)) {
+                if (isPanel(targ)) {
+                    layout = Algorithm.dockToPanel(layout, source, targ, direction);
+                }
+                else if (isBox(targ)) {
+                    layout = Algorithm.dockToBox(layout, source, targ, direction);
+                }
                 console.warn("cannot move boxes yet");
             }
             else {
@@ -224,13 +227,13 @@ export class DockLayout extends DockPortalManager {
                     }
                     else {
                         let newPanel = Algorithm.converToPanel(source);
-                        layout = Algorithm.dockPanelToPanel(layout, newPanel, targ, direction);
+                        layout = Algorithm.dockToPanel(layout, newPanel, targ, direction);
                     }
                 }
                 else if (isBox(targ)) {
                     // box target
                     let newPanel = Algorithm.converToPanel(source);
-                    layout = Algorithm.dockPanelToBox(layout, newPanel, targ, direction);
+                    layout = Algorithm.dockToBox(layout, newPanel, targ, direction);
                 }
                 else {
                     // tab target
@@ -476,10 +479,10 @@ export class DockLayout extends DockPortalManager {
             savedLayout = Serializer.saveLayoutData(layoutData, this.props.saveTab, this.props.afterPanelSaved);
             layoutData.loadedFrom = savedLayout;
             onLayoutChange(savedLayout, currentTabId, direction);
-            //if (layout) {
-            // if layout prop is defined, we need to force an update to make sure it's either updated or reverted back
-            this.forceUpdate();
-            //}
+            if (layout) {
+                // if layout prop is defined, we need to force an update to make sure it's either updated or reverted back
+                this.forceUpdate();
+            }
         }
         if (!layout && !silent) {
             // uncontrolled layout when Props.layout is not defined

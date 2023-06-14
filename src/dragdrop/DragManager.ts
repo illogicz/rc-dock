@@ -77,6 +77,7 @@ export class DragState {
     if (!this._init) {
       throw new Error('setData can only be used in onDragStart callback');
     }
+    console.log("setData", data, scope);
     _dataScope = scope;
     _data = data;
   }
@@ -115,6 +116,7 @@ export class DragState {
           if (handlers.onDragOverT) {
             handlers.onDragOverT(this);
             if (this.acceptMessage != null) {
+              //console.log("searchElement", searchElement, _dragListeners)
               droppingHandlers = handlers;
               break;
             }

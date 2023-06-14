@@ -20,8 +20,8 @@ export declare function find(layout: LayoutData, id: string, filter?: Filter): P
 export declare function addNextToTab(layout: LayoutData, source: TabData | PanelData, target: TabData, direction: DropDirection): LayoutData;
 export declare function addTabToPanel(layout: LayoutData, source: TabData | PanelData, panel: PanelData, idx?: number): LayoutData;
 export declare function converToPanel(source: TabData | PanelData): PanelData;
-export declare function dockPanelToPanel(layout: LayoutData, newPanel: PanelData, panel: PanelData, direction: DropDirection): LayoutData;
-export declare function dockPanelToBox(layout: LayoutData, newPanel: PanelData, box: BoxData, direction: DropDirection): LayoutData;
+export declare function dockToPanel(layout: LayoutData, newItem: PanelData | BoxData, panel: PanelData, direction: DropDirection): LayoutData;
+export declare function dockToBox(layout: LayoutData, newItem: PanelData | BoxData, box: BoxData, direction: DropDirection): LayoutData;
 export declare function floatElement(layout: LayoutData, data: PanelData | BoxData, rect?: {
     left: number;
     top: number;
@@ -29,7 +29,7 @@ export declare function floatElement(layout: LayoutData, data: PanelData | BoxDa
     height: number;
 }): LayoutData;
 export declare function panelToWindow(layout: LayoutData, newPanel: PanelData): LayoutData;
-export declare function removeFromLayout(layout: LayoutData, source: TabData | PanelData): LayoutData;
+export declare function removeFromLayout(layout: LayoutData, source: TabData | PanelData | BoxData): LayoutData;
 export declare function moveToFront(layout: LayoutData, source: TabData | PanelData | BoxData): LayoutData;
 export declare function maximize(layout: LayoutData, source: TabData | PanelData): LayoutData;
 export declare function fixFloatPos(layout: LayoutData, layoutWidth?: number, layoutHeight?: number): LayoutData;

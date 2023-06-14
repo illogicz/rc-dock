@@ -44,18 +44,18 @@ body > .dragging-layer > div:last-child {
 .dock-fbox > .dock-panel,
 .dock-fbox > .dock-box {
   position: absolute;
-  pointer-events: visible;
+  pointer-events: all;
   box-shadow: 0 0 4px #aaaaaa;
 }
-.dock-fbox > .dock-panel.dragging {
+.dock-fbox > .dragging {
   opacity: 0.8;
   pointer-events: none;
 }
 .dock-box-float {
   background: #fff;
+  border: 1px solid #ddd;
 }
-.dock-panel.dragging,
-.dock-box.dragging {
+.dock-panel.dragging {
   opacity: 0.3;
 }
 .dock-panel-drag-size,

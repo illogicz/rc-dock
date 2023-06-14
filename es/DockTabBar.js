@@ -11,7 +11,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 import * as React from "react";
 import { DockContextType } from "./DockData";
-import { FloatHeader } from "./FloatDrag";
+import { DragHeader } from "./dragdrop/DragHeader";
 /**
  * @return returns true if navigation is handled in local tab move, otherwise returns false
  */
@@ -40,9 +40,7 @@ function checkLocalTabMove(key, tabbar) {
     return false;
 }
 export function DockTabBar(props) {
-    const { 
-    //onDragStart, onDragMove, onDragEnd, onDragOver, onDrop, 
-    TabNavList, isMaximized, data, onUpdate, setDragging } = props, restProps = __rest(props, ["TabNavList", "isMaximized", "data", "onUpdate", "setDragging"]);
+    const { TabNavList, isMaximized, navListProps } = props, rest = __rest(props, ["TabNavList", "isMaximized", "navListProps"]);
     const layout = React.useContext(DockContextType);
     const ref = React.useRef();
     const getRef = (div) => {
@@ -57,6 +55,19 @@ export function DockTabBar(props) {
             e.preventDefault();
         }
     };
-    return (React.createElement(FloatHeader, { data: data, getRef: getRef, setDragging: setDragging, onUpdate: onUpdate, className: "dock-bar", role: "tablist", onKeyDown: onKeyDown },
-        React.createElement(TabNavList, Object.assign({}, restProps))));
+    // return (
+    //   <DragDropDiv onDragStartT={onDragStartT}
+    //     onDragMoveT={onDragMoveT}
+    //     onDragEndT={onDragEndT}
+    //     role="tablist"
+    //     className="dock-bar"
+    //     onKeyDown={onKeyDown}
+    //     getRef={getRef}
+    //     tabIndex={-1}
+    //   >
+    //     <TabNavList {...navListProps} />
+    //   </DragDropDiv>
+    // );
+    return (React.createElement(DragHeader, Object.assign({}, rest, { getRef: getRef, className: "dock-bar", role: "tablist", onKeyDown: onKeyDown, tabIndex: -1 }),
+        React.createElement(TabNavList, Object.assign({}, navListProps))));
 }
